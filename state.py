@@ -26,12 +26,6 @@ class AtBat:
 
 
 # Think about pinch runners...need to know runner's "slot in the inning"
-# Think about runners scoring on the same play...multiples "at home"
-
-# End of inning with stranded runners, end="" for all, no scores
-# Runners scoring, also end="" for runners
 
 # Intentional walk says on_2b for eatch pitch?? No runner element
 # Pick offs
-
-# Wild pitch, runners move up, then K. How to know they moved on K.

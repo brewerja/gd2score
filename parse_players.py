@@ -6,7 +6,7 @@ Player = namedtuple('Player', 'id first last')
 
 class PlayersParser:
     def __init__(self, xml):
-        self.players = set()
+        self.players = dict()
         self.parse_players(xml)
 
     def parse_players(self, xml):
@@ -25,7 +25,7 @@ class PlayersParser:
         if player.tag not in ['coach']:
             p = Player(int(player.attrib['id']), player.attrib['first'],
                        player.attrib['last'])
-            self.players.add(p)
+            self.players[p.id] = p
 
 
 if __name__ == '__main__':
