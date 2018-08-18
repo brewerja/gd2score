@@ -2,19 +2,20 @@ import re
 import xml.etree.ElementTree as ET
 from copy import deepcopy
 
-from state import AtBat, Runner
+from state import AtBat, Runner, Inning
 
 BASES = ('1B', '2B', '3B')
 
 
 class GameParser:
-    def __init__(self, xml, players):
+    def __init__(self, xml):
         self.event_types = set()
 
         self.inning = 1.0
         self.events = []
+        self.innings = []
+        self.active_inning = None
         self.active_atbat = None
-        self.players = players
         self.parse_game(xml)
 
     def parse_game(self, xml):
@@ -25,6 +26,8 @@ class GameParser:
 
     def parse_inning(self, inning):
         self.inning = float(inning.attrib['num'])
+        self.active_inning = Inning(self.inning)
+        self.innings.append(self.active_inning)
 
         for half_inning in inning:
             self.parse_half_inning(half_inning)
@@ -41,11 +44,12 @@ class GameParser:
         self.event_types.add(event.attrib['event'])
         if event.tag == 'atbat':
             self.parse_atbat(event)
+            self.active_inning.add_event(self.active_atbat)
+            self.events.append(self.active_atbat)
         elif event.tag == 'action':
             self.parse_action(event)
         else:
             raise Exception('Unknown event type')
-        self.events.append(self.active_atbat)
 
     def parse_atbat(self, atbat):
         pa_num = int(atbat.attrib['num'])
@@ -56,9 +60,6 @@ class GameParser:
         outs = int(atbat.attrib['o'])
         home_score = int(atbat.attrib['home_team_runs'])
         away_score = int(atbat.attrib['away_team_runs'])
-
-        if batter not in self.players:
-            raise Exception('id not found %d' % batter)
 
         self.active_atbat = AtBat(pa_num, event_num, batter, des, event,
                                   self.inning, outs,
@@ -81,8 +82,6 @@ class GameParser:
 
     def parse_runner(self, runner):
         id = int(runner.attrib['id'])
-        if id not in self.players:
-            raise Exception('id not found %d' % id)
         start, end = self.get_runner_start_end(runner)
         event_num = int(runner.attrib['event_num'])
         self.active_atbat.runners.append(Runner(id, start, end, event_num))
@@ -105,10 +104,6 @@ class GameParser:
             return int(base[0])
         else:
             raise Exception('Could not parse base: %s' % base)
-
-    def get_player_str(self, id):
-        p = self.players[id]
-        return '%d %s. %s' % (p.id, p.first[0], p.last)
 
 
 if __name__ == '__main__':
