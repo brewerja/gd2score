@@ -1,7 +1,11 @@
+import re
 import xml.etree.ElementTree as ET
 from copy import deepcopy
 
-from state import State
+from state import AtBat, Runner
+
+BASES = ('1B', '2B', '3B')
+
 
 class GameParser:
     def __init__(self, xml):
@@ -9,7 +13,7 @@ class GameParser:
 
         self.inning = 1.0
         self.events = []
-        self.active_event = None
+        self.active_atbat = None
         self.parse_game(xml)
 
     def parse_game(self, xml):
@@ -40,18 +44,19 @@ class GameParser:
             self.parse_action(event)
         else:
             raise Exception('Unknown event type')
-        self.events.append(self.active_event)
+        self.events.append(self.active_atbat)
 
     def parse_atbat(self, atbat):
         pa_num = int(atbat.attrib['num'])
-        batter = atbat.attrib['batter']
-        des = atbat.attrib['des']
+        event_num = int(atbat.attrib['event_num'])
+        batter = int(atbat.attrib['batter'])
+        des = re.sub('\s\s+', ' ', atbat.attrib['des'].strip())
         event = atbat.attrib['event']
-        outs = atbat.attrib['o']
-        home_score = atbat.attrib['home_team_runs']
-        away_score = atbat.attrib['away_team_runs']
+        outs = int(atbat.attrib['o'])
+        home_score = int(atbat.attrib['home_team_runs'])
+        away_score = int(atbat.attrib['away_team_runs'])
 
-        self.active_event = State(pa_num, batter, des, event,
+        self.active_atbat = AtBat(pa_num, event_num, batter, des, event,
                                   self.inning, outs,
                                   home_score=home_score,
                                   away_score=away_score)
@@ -64,25 +69,36 @@ class GameParser:
             else:
                 raise Exception('Unknown atbat type: %s' % child.tag)
 
-        print(self.active_event.__dict__)
+        print(self.active_atbat.__dict__)
 
     def parse_action(self, action):
         print('  - %s (%s) %s' % (action.tag, action.attrib['event_num'],
                                   action.attrib['des']))
 
     def parse_runner(self, runner):
-        id = runner.attrib['id']
-        end = runner.attrib['end']
+        id = int(runner.attrib['id'])
+        start, end = self.get_runner_start_end(runner)
+        event_num = int(runner.attrib['event_num'])
+        self.active_atbat.runners.append(Runner(id, start, end, event_num))
 
-        if end == '1B':
-            self.active_event.on_1b = id
-        elif end == '2B':
-            self.active_event.on_2b = id
-        elif end == '3B':
-            self.active_event.on_3b = id
-        elif (end == '' and 'score' in runner.attrib and
-              runner.attrib['score'] == 'T'):
-            self.active_event.at_hp.append(id)
+    def get_runner_start_end(self, runner):
+        start = self.parse_base(runner.attrib['start'])
+        end = self.parse_base(runner.attrib['end'])
+        # '' is either runner scoring or end of inning, runner stranded
+        if end == 0:
+            if runner.attrib.get('score') == 'T':
+                end = 4
+            elif self.active_atbat.outs == 3:
+                end = start
+        return start, end
+
+    def parse_base(self, base):
+        if not base:
+            return 0
+        elif base in BASES:
+            return int(base[0])
+        else:
+            raise Exception('Could not parse base: %s' % base)
 
 
 if __name__ == '__main__':

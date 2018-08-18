@@ -1,10 +1,14 @@
-class State:
-    def __init__(self, pa_num, batter, des, event,
-                 inning=1.0, outs=0,
-                 on_1b=None, on_2b=None, on_3b=None, at_hp=None,
+from collections import namedtuple
+
+Runner = namedtuple('Runner', 'id start end event_num')
+
+class AtBat:
+    def __init__(self, pa_num, event_num, batter, des, event,
+                 inning=1.0, outs=0, runners=None,
                  home_score=0, away_score=0):
 
         self.pa_num = pa_num
+        self.event_num = event_num
         self.batter = batter
         self.des = des
         self.event = event
@@ -12,13 +16,10 @@ class State:
         self.inning = inning
         self.outs = outs
 
-        self.on_1b = on_1b
-        self.on_2b = on_2b
-        self.on_3b = on_3b
-        if at_hp:
-            self.at_hp = at_hp
+        if runners:
+            self.runners = runners
         else:
-            self.at_hp = list()
+            self.runners = list()
 
         self.home_score = home_score
         self.away_score = away_score
@@ -31,3 +32,6 @@ class State:
 # Runners scoring, also end="" for runners
 
 # Intentional walk says on_2b for eatch pitch?? No runner element
+# Pick offs
+
+# Wild pitch, runners move up, then K. How to know they moved on K.
