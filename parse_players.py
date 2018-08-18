@@ -1,7 +1,19 @@
 import xml.etree.ElementTree as ET
-from collections import namedtuple
 
-Player = namedtuple('Player', 'id first last')
+
+class Player:
+    def __init__(self, id, first, last):
+        self.id = id
+        self.first = first
+        self.last = last
+
+    def __str__(self):
+        uppers = ['%s.' % c for c in self.first if c.isupper()]
+        if len(uppers) > 1:
+            return '%s %s' % (''.join(uppers), self.last)
+        else:
+            return '%s. %s' % (self.first[0], self.last)
+
 
 
 class PlayersParser:
