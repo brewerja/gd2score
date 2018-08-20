@@ -1,0 +1,31 @@
+line {
+    stroke: gray;
+}
+
+rect {
+    stroke: gray;
+    fill: none;
+}
+
+text.batter-name {
+    font-family: Arial;
+    font-size: 10pt;
+}
+
+text {
+    font-family: Arial;
+    font-size: 10pt;
+}
+
+text.out {
+    fill: red;
+}
+
+text.on-base {
+    fill: green;
+    font-weight: bold;
+}
+
+text.error {
+    fill: orange;
+}

@@ -3,16 +3,14 @@ import xml.etree.ElementTree as ET
 from copy import deepcopy
 
 from state import AtBat, Runner, Inning
+from scoring import get_scoring
 
 BASES = ('1B', '2B', '3B')
 
 
 class GameParser:
     def __init__(self, xml):
-        self.event_types = set()
-
         self.inning = 1.0
-        self.events = []
         self.innings = []
         self.active_inning = None
         self.active_atbat = None
@@ -41,11 +39,9 @@ class GameParser:
             self.parse_event(event)
 
     def parse_event(self, event):
-        self.event_types.add(event.attrib['event'])
         if event.tag == 'atbat':
             self.parse_atbat(event)
             self.active_inning.add_event(self.active_atbat)
-            self.events.append(self.active_atbat)
         elif event.tag == 'action':
             self.parse_action(event)
         else:
@@ -66,6 +62,8 @@ class GameParser:
                                   home_score=home_score,
                                   away_score=away_score)
 
+        self.active_atbat.scoring = get_scoring(self.active_atbat)
+
         for child in atbat:
             if child.tag == 'runner':
                 self.parse_runner(child)
@@ -75,6 +73,8 @@ class GameParser:
                 raise Exception('Unknown atbat type: %s' % child.tag)
 
         print(self.active_atbat.__dict__)
+        print(self.active_atbat.scoring)
+        #input()
 
     def parse_action(self, action):
         print('  - %s (%s) %s' % (action.tag, action.attrib['event_num'],
@@ -109,5 +109,3 @@ class GameParser:
 if __name__ == '__main__':
     with open('inning_all.xml') as f:
         g = GameParser(f.read())
-    print('All Event Types: ' + str(g.event_types))
-    print(len(g.events))

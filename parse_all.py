@@ -7,6 +7,7 @@ from bs4 import BeautifulSoup
 
 from parse_game import GameParser
 from parse_players import PlayersParser
+from draw_scorecard import draw
 
 GD2_URL = 'https://gd2.mlb.com/components/game/mlb'
 
@@ -36,13 +37,25 @@ def get_todays_game_ids():
 
 
 if __name__ == '__main__':
-    game_ids = list_game_ids(2018, 8, 11)
-    event_types = set()
+    #with open('players.xml') as f:
+    #    players = PlayersParser(f.read()).players
+    #with open('inning_all.xml') as f:
+    #    game = GameParser(f.read())
+    #draw(game, players)
+
+    # Parsed 8/11 - 8/13 successfully!
+    game_ids = list_game_ids(2018, 8, 13)
     for game_id in game_ids:
         game_url = get_game_url(game_id)
         players = PlayersParser(get(game_url + 'players.xml')).players
         for p in players.values():
             print('%d %s. %s' % (p.id, p.first[0], p.last))
-        g = GameParser(get(game_url + 'inning/inning_all.xml'), players)
-        event_types = event_types.union(g.event_types)
-    print(event_types)
+        game = GameParser(get(game_url + 'inning/inning_all.xml'))
+        draw(game, players)
+
+# 8/11 BOS game 2: Jackie Bradley Jr. lines out sharply, pitcher Yefry Ramirez to third baseman
+# Renato Nunez to first baseman Trey
+
+# 8/12  'Cory Spangenberg hits a sacrifice bunt. Freddy Galvis scores.
+# Christian Villanueva to 3rd. Cory Spangenberg to 2nd. Throwing error by
+# pitcher Austin Davis.'
