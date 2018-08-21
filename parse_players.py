@@ -9,11 +9,10 @@ class Player:
 
     def __str__(self):
         uppers = ['%s.' % c for c in self.first if c.isupper()]
-        if len(uppers) > 1:
-            return '%s %s' % (''.join(uppers), self.last)
-        else:
-            return '%s. %s' % (self.first[0], self.last)
+        return '%s %s' % (''.join(uppers), self.last)
 
+    def __repr__(self):
+        return self.__str__()
 
 
 class PlayersParser:
@@ -29,7 +28,6 @@ class PlayersParser:
 
     def parse_team(self, team):
         if team.tag not in ['umpires']:
-            print('\n' + team.attrib['name'])
             for player in team:
                 self.parse_player(player)
 
@@ -42,5 +40,5 @@ class PlayersParser:
 
 if __name__ == '__main__':
     with open('players.xml') as f:
-        for p in PlayersParser(f.read()).players:
-            print('%d %s. %s' % (p.id, p.first[0], p.last))
+        for player in PlayersParser(f.read()).players.values():
+            print('%d %s' % (player.id, player))
