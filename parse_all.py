@@ -1,7 +1,7 @@
 import shutil
 import tempfile
 import urllib.request
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from bs4 import BeautifulSoup
 
@@ -44,14 +44,19 @@ if __name__ == '__main__':
     #draw(game, players)
 
     # Parsed 8/11 - 8/13 successfully!
-    game_ids = list_game_ids(2018, 8, 13)
-    for game_id in game_ids:
-        game_url = get_game_url(game_id)
-        players = PlayersParser(get(game_url + 'players.xml')).players
-        for p in players.values():
-            print('%d %s. %s' % (p.id, p.first[0], p.last))
-        game = GameParser(get(game_url + 'inning/inning_all.xml'))
-        draw(game, players)
+
+    start_date = datetime(2018, 7, 8)  # Started from 4/1
+    for date in [start_date + timedelta(days=x) for x in range(0, 10)]:
+        game_ids = list_game_ids(date.year, date.month, date.day)
+        for game_id in game_ids:
+            try:
+                game_url = get_game_url(game_id)
+                players = PlayersParser(get(game_url + 'players.xml')).players
+                print(game_id)
+                game = GameParser(get(game_url + 'inning/inning_all.xml'))
+                draw(game, players)
+            except urllib.error.HTTPError:
+                print(game_id, '404')
 
 # 8/11 BOS game 2: Jackie Bradley Jr. lines out sharply, pitcher Yefry Ramirez to third baseman
 # Renato Nunez to first baseman Trey
