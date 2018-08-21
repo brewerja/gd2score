@@ -57,8 +57,7 @@ def get_scoring(ab):
         g = re.search('grounds out(?:\s\w+)? to (\w+ baseman|shortstop|pitcher|catcher)', ab.des)
         if g:
             return Scoring('G' + POSITIONS[g.group(1)], 'out')
-        g = re.search('grounds out(?:\s\w+)?, (\w+ baseman|shortstop|pitcher|catcher)',
-                      ab.des)
+        g = re.search('grounds out(?:\s\w+)?, (\w+ fielder|\w+ baseman|shortstop|pitcher|catcher)', ab.des)
         if g:
             return Scoring('G' + POSITIONS[g.group(1)], 'out')
     elif ab.event == 'Grounded Into DP':
@@ -94,7 +93,7 @@ def get_scoring(ab):
         if 'hits a sacrifice bunt' in ab.des:
             return Scoring('SAC', 'out')
     elif ab.event == 'Flyout':
-        g = re.search('flies out (?:\w+\s)?to (\w+ fielder)', ab.des)
+        g = re.search('flies out (?:\w+\s)?to (\w+ fielder|\w+ baseman)', ab.des)
         if g:
             return Scoring('F' + POSITIONS[g.group(1)], 'out')
         g = re.search('flies out, (\w+ fielder)', ab.des)
@@ -163,7 +162,7 @@ def get_scoring(ab):
     elif ab.event == 'Hit By Pitch':
         return Scoring('HB', 'on-base')
     elif ab.event == 'Field Error':
-        g = re.search('(?:fielding|missed catch|throwing) error by (\w+ baseman|\w+ fielder|pitcher|shortstop|catcher)', ab.des)
+        g = re.search('(?:interference|fielding|missed catch|throwing) error by (\w+ baseman|\w+ fielder|pitcher|shortstop|catcher)', ab.des)
         if g:
             return Scoring('E' + POSITIONS[g.group(1)], 'error')
     elif ab.event == 'Fielders Choice Out':
