@@ -34,10 +34,11 @@ Scoring = namedtuple('Scoring', 'code result')
 
 
 def get_scoring(ab):
-    ab.des = re.sub('\s,(\w)', r', \1', ab.des)  # 5/12
+    ab.des = re.sub('\s,(\w)', r', \1', ab.des)  # 5/12  ' ,w' -> ', w'
     if ((ab.event == 'Strikeout' or ab.event == 'Strikeout - DP') and
         ('swinging' in ab.des or 'on a foul tip' in ab.des or
-         'on a foul bunt' in ab.des or 'on a missed bunt' in ab.des)):
+         'on a foul bunt' in ab.des or 'on a missed bunt' in ab.des or
+         'ejected' in ab.des)):
         return Scoring('K', 'out')
     elif ((ab.event == 'Strikeout' or ab.event == 'Strikeout - DP') and
         'called out on' in ab.des):
@@ -54,19 +55,19 @@ def get_scoring(ab):
         print(ab.__dict__)
         return Scoring('BI', 'out')
     elif ab.event == 'Groundout' or ab.event == 'Bunt Groundout':
-        g = re.search('grounds out(?:\s\w+)? to (\w+ baseman|shortstop|pitcher|catcher)', ab.des)
+        g = re.search('grounds out(?:\s\w+)? to (\w+ fielder|\w+ baseman|shortstop|pitcher|catcher)', ab.des)
         if g:
             return Scoring('G' + POSITIONS[g.group(1)], 'out')
         g = re.search('grounds out(?:\s\w+)?, (\w+ fielder|\w+ baseman|shortstop|pitcher|catcher)', ab.des)
         if g:
             return Scoring('G' + POSITIONS[g.group(1)], 'out')
     elif ab.event == 'Grounded Into DP':
-        g = re.search('double play, (\w+ baseman|shortstop|pitcher|catcher)',
+        g = re.search('double play, (\w+ fielder|\w+ baseman|shortstop|pitcher|catcher)',
                       ab.des)
         if g:
             return Scoring('G' + POSITIONS[g.group(1)], 'out')
     elif ab.event == 'Forceout':
-        g = re.search('ground(?:s)?(?:\sbunts)? into a force out, (?:fielded by\s)?(\w+ baseman|shortstop|pitcher|catcher)',
+        g = re.search('ground(?:s)?(?:\sbunts)? into a force out, (?:fielded by\s)?(\w+ fielder|\w+ baseman|shortstop|pitcher|catcher)',
                       ab.des)
         if g:
             return Scoring('G' + POSITIONS[g.group(1)], 'out')
@@ -82,7 +83,7 @@ def get_scoring(ab):
         if g:  # 4/25
             return Scoring('E' + POSITIONS[g.group(1)], 'error')
     elif ab.event == 'Sac Fly DP' or ab.event == 'Sacrifice Bunt DP':
-        g = re.search('(ground bunts|flies) into a sacrifice double play, (\w+ fielder|\w+ baseman|pitcher|catcher)',
+        g = re.search('(ground bunts|flies) into a sacrifice double play, (\w+ fielder|\w+ baseman|shortstop|pitcher|catcher)',
                       ab.des)
         if g:
             return Scoring(AIR_TYPES[g.group(1)] + POSITIONS[g.group(2)], 'out')
@@ -106,8 +107,8 @@ def get_scoring(ab):
         g = re.search('lines out(?:\s\w+)?, (\w+ baseman|\w+ fielder|shortstop|pitcher|catcher)', ab.des)
         if g:
             return Scoring('L' + POSITIONS[g.group(1)], 'out')
-    elif ab.event == 'Double Play':
-        g = re.search("(pops|grounds|hit|flies|lines) into a(?:n unassisted|\sfielder's choice)? double play(?:\sin foul territory)?, (\w+ fielder|\w+ baseman|shortstop|pitcher|catcher)", ab.des)
+    elif ab.event == 'Double Play':  #  9/22/17 error
+        g = re.search("(pops|grounds|ground bunts|hit|flies|lines) into a(?:n unassisted|\sfielder's choice)? double play(?:\sin foul territory)?, (\w+ fielder|\w+ baseman|shortstop|pitcher|catcher)", ab.des)
         if g:
             return Scoring(AIR_TYPES[g.group(1)] + POSITIONS[g.group(2)], 'out')
     elif ab.event == 'Triple Play':
@@ -116,7 +117,7 @@ def get_scoring(ab):
             return Scoring(AIR_TYPES[g.group(1)] + POSITIONS[g.group(2)], 'out')
         pass
     elif ab.event == 'Pop Out' or ab.event == 'Bunt Pop Out':
-        g = re.search('pops out (?:\w+\s)?to (\w+ baseman|shortstop|pitcher|catcher)', ab.des)
+        g = re.search('pops out (?:\w+\s)?to (\w+ fielder|\w+ baseman|shortstop|pitcher|catcher)', ab.des)
         if g:  # TODO: combine
             return Scoring('P' + POSITIONS[g.group(1)], 'out')
         g = re.search('pops out, (\w+ baseman|shortstop|pitcher|catcher)', ab.des)
@@ -131,7 +132,7 @@ def get_scoring(ab):
             return Scoring('CS', 'out')
         elif 'out at' in ab.des:
             return Scoring('TOOTBLAN', 'out')
-    elif ab.event == 'Single':
+    elif ab.event == 'Single':  # 4/20/16 error on appeal play
         g = re.search('(\w+ ball|line drive|pop up|bunt pop) to (\w+ fielder|\w+ baseman|shortstop|pitcher|catcher)', ab.des)
         if g:
             return Scoring(HIT_BALLS[g.group(1)] + POSITIONS[g.group(2)],
@@ -139,13 +140,16 @@ def get_scoring(ab):
         g = re.search('line drive to (\w+ fielder|\w+ baseman|shortstop|pitcher|catcher)', ab.des)
         if g:
             return Scoring('L' + POSITIONS[g.group(1)], 'on-base')
-        g = re.search('singles on a ground ball\.', ab.des)
-        if g:  # runner hit by ball 4/24
+        g = re.search('singles on a (\w+\s)?(\w+ \w+)\.', ab.des)
+        if g:  # runner hit by ball 4/24/18 4/16,25/17
             return Scoring('S', 'on-base')
     elif ab.event == 'Double':
         g = re.search('(\w+ ball|pop up|line drive) to (\w+ fielder|\w+ baseman|shortstop)', ab.des)
         if g:
             return Scoring(HIT_BALLS[g.group(1)] + POSITIONS[g.group(2)], 'on-base')
+        g = re.search('doubles\.', ab.des)
+        if g: # 3/31/17
+            return Scoring('D', 'on-base')
         if 'ground-rule' in ab.des:
             if 'line drive' in ab.des:
                 return Scoring('L', 'on-base')
@@ -153,6 +157,8 @@ def get_scoring(ab):
                 return Scoring('F', 'on-base')
             elif 'ground ball' in ab.des:
                 return Scoring('G', 'on-base')
+            elif 'pop up' in ab.des:
+                return Scoring('P', 'on-base')
     elif ab.event == 'Triple':
         g = re.search('(\w+ ball|line drive|pop up) to (\w+ fielder|\w+ baseman|shortstop|pitcher|catcher)', ab.des)
         if g:
