@@ -98,7 +98,8 @@ def get_scoring(ab):
             return Scoring('E' + POSITIONS[g.group(1)], 'error')
 
     elif ab.event == 'Sac Fly DP' or ab.event == 'Sacrifice Bunt DP':
-        g = re.search(AIR + ' into a sacrifice double play, ' + POS, ab.des)
+        g = re.search((AIR + ' into a sacrifice double play'
+                       '(?: in foul territory)?, ' + POS), ab.des)
         if g:
             return Scoring(AIR_TYPES[g.group(1)] + POSITIONS[g.group(2)],
                            'out')
