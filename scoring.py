@@ -34,6 +34,7 @@ OUT_TYPES = {
     'pops out': 'P',
     'flies out': 'F',
     'lines out': 'L',
+    'grounds out': 'G',
 }
 
 POS = '(\w+ fielder|\w+ baseman|shortstop|pitcher|catcher)'
@@ -47,6 +48,7 @@ Scoring = namedtuple('Scoring', 'code result')
 
 def get_scoring(ab):
     ab.des = re.sub('\s,(\w)', r', \1', ab.des)  # 5/12  ' ,w' -> ', w'
+
     if ((ab.event == 'Strikeout' or ab.event == 'Strikeout - DP') and
         ('swinging' in ab.des or 'on a foul tip' in ab.des or
          'on a foul bunt' in ab.des or 'on a missed bunt' in ab.des or
@@ -69,13 +71,7 @@ def get_scoring(ab):
             return Scoring('CI', 'on-base')
 
     elif ab.event == 'Batter Interference':  # 4/1/2018, dp, weird
-        print(ab.__dict__)
         return Scoring('BI', 'out')
-
-    elif ab.event == 'Groundout' or ab.event == 'Bunt Groundout':
-        g = re.search('grounds out(?:\s\w+)?(?:\sto\s|,\s)' + POS, ab.des)
-        if g:
-            return Scoring('G' + POSITIONS[g.group(1)], 'out')
 
     elif ab.event == 'Grounded Into DP':
         g = re.search('double play, ' + POS, ab.des)
@@ -111,8 +107,8 @@ def get_scoring(ab):
         if 'hits a sacrifice bunt' in ab.des:
             return Scoring('SAC', 'out')
 
-    elif ab.event in ('Flyout', 'Lineout', 'Bunt Lineout',
-                      'Pop Out', 'Bunt Pop Out'):
+    elif ab.event in ('Flyout', 'Lineout', 'Bunt Lineout', 'Pop Out',
+                      'Bunt Pop Out', 'Groundout', 'Bunt Groundout'):
         # ', ' or ' sharply, ' or ' sharply to ' or ' to '
         g = re.search(OUT + '(?:,\s|\s\w+,\s|\s\w+\sto\s|\sto\s)' + POS,
                       ab.des)
@@ -120,17 +116,11 @@ def get_scoring(ab):
             return Scoring(OUT_TYPES[g.group(1)] + POSITIONS[g.group(2)],
                            'out')
 
-    elif ab.event == 'Double Play':  # 9/22/17 error
+    elif ab.event == 'Double Play' or ab.event == 'Triple Play':
         g = re.search((AIR + " into a(?:n unassisted|\sfielder's choice)? " +
-                       'double play(?:\sin foul territory)?, ' + POS), ab.des)
-        if g:
-            return Scoring(AIR_TYPES[g.group(1)] + POSITIONS[g.group(2)],
-                           'out')
-
-    elif ab.event == 'Triple Play':
-        g = re.search((AIR + " into a(?:n unassisted|\sfielder's choice)? " +
-                       'triple play(?:\sin foul territory)?, ' + POS), ab.des)
-        if g:
+                       '(?:double|triple) play(?:\sin foul territory)?, ' +
+                       POS), ab.des)
+        if g:  # 9/22/17 single on the play, causes parsing error
             return Scoring(AIR_TYPES[g.group(1)] + POSITIONS[g.group(2)],
                            'out')
 
