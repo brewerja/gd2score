@@ -9,7 +9,7 @@ class Player:
 
     def __str__(self):
         uppers = ['%s.' % c for c in self.first if c.isupper()]
-        return '%s %s' % (''.join(uppers), self.last)
+        return '%s %s' % (' '.join(uppers), self.last)
 
     def __repr__(self):
         return self.__str__()
