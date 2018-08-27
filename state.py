@@ -1,8 +1,7 @@
 from collections import namedtuple
 
-Runner = namedtuple('Runner', 'id start end event_num')
-Action = namedtuple('Action', 'event_num event des')
-
+Runner = namedtuple('Runner', 'id start end event_num out')
+Action = namedtuple('Action', 'event_num event des player')
 
 class Inning:
     def __init__(self, num):

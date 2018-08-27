@@ -7,15 +7,31 @@ from scoring import get_scoring
 
 BASES = ('1B', '2B', '3B')
 
+BASE_NUMBER = {
+    '1st': 1,
+    '2nd': 2,
+    '3rd': 3,
+    'home': 4
+}
+
+OUTS_ON_BASES = ('(?:out at|doubled off|picked off and caught stealing|'
+                 'caught stealing)')
+
+LONG_BASE = '(%s)' % '|'.join(BASE_NUMBER.keys())
+
+PICKS_OFF = 'picks off .*'
+
 
 class GameParser:
-    def __init__(self, xml):
+    def __init__(self, game_xml, players):
         self.inning = 1.0
         self.innings = []
         self.active_inning = None
         self.active_atbat = None
         self.actions = {}
-        self.parse_game(xml)
+        self.players = players
+        self.active_pinch_runner = False
+        self.parse_game(game_xml)
 
     def parse_game(self, xml):
         game = ET.fromstring(xml)
@@ -65,7 +81,9 @@ class GameParser:
 
         self.active_atbat.scoring = get_scoring(self.active_atbat)
 
-        for child in atbat:
+        self.children_ct = len(atbat)
+        for i, child in enumerate(atbat):
+            self.child_no = i + 1
             if child.tag == 'runner':
                 self.parse_runner(child)
             elif child.tag in ['pitch', 'po']:
@@ -75,12 +93,21 @@ class GameParser:
 
         print(self.active_atbat.__dict__)
         print(self.active_atbat.scoring)
+        self.active_pinch_runner = False  # Reset in case swap not in runners
         #input()
 
     def parse_action(self, action):
-        a = Action(int(action.attrib['event_num']),
-                   action.attrib['event'],
-                   re.sub('\s+', ' ', action.attrib['des']).strip())
+        event_num = int(action.attrib['event_num'])
+        event = action.attrib['event']
+        des = re.sub('\s+', ' ', action.attrib['des']).strip()
+        player_id = int(action.attrib['player'])
+
+        a = Action(event_num, event, des, player_id)
+
+        if (event == 'Offensive Sub' and
+            'Offensive Substitution: Pinch-runner' in des):
+            self.active_pinch_runner = True
+            self.pinch_runner_ctr = 0
 
         self.add_action(a)
         print('%s: (%s) %s\n%s' % (action.tag,
@@ -90,26 +117,59 @@ class GameParser:
 
     def parse_runner(self, runner):
         id = int(runner.attrib['id'])
-        start, end = self.get_runner_start_end(runner)
-        event_num = int(runner.attrib['event_num'])
-        self.active_atbat.add_runner(Runner(id, start, end, event_num))
-
-    def get_runner_start_end(self, runner):
         start = self.parse_base(runner.attrib['start'])
         end = self.parse_base(runner.attrib['end'])
+        event_num = int(runner.attrib['event_num'])
+        out = False
+        
+        if (self.active_pinch_runner and 
+                self.active_atbat.event_num == event_num):
+            self.pinch_runner_ctr += 1
+            if self.pinch_runner_ctr == 2:
+                self.active_pinch_runner = False
+
+            # TODO: Multiple PRs would break this, so need to validate PRs
+            # If 1st, lookup player name, replaces X in action des
+            # If 2nd, lookup player name, replaces X in action des
+            print('PR COUNTER %d' % self.pinch_runner_ctr)
+            return  # Ignore, this should be a pinch runner swap
+
         # '' is either runner scoring, stranded to end inning, or out
         # No runner tags when they don't move, unless stranded to end inning
-        event_num = int(runner.attrib['event_num'])
         if end == 0:
             if runner.attrib.get('score') == 'T':  # Scores!
                 end = 4
             elif (self.active_atbat.outs == 3 and
                   self.active_atbat.event_num == event_num):  # Stranded
                 end = start
-            else:
-                print('Runner out on the bases')
-                # TODO: figure out the base, look for 'X out at (base)'
-        return start, end
+                # Or possibly inning ending out on the bases
+                if (event_num in self.actions and
+                        self.actions[event_num].player == id):
+                    out = True
+                    runner_last_name = self.players[id].last
+                    print('INNING ENDING OUT ON BASES')
+                    end = self.find_base_where_out_was_made(
+                            runner_last_name, self.active_atbat.des)
+            else:  # Out on the bases
+                if self.active_atbat.event_num == event_num:
+                    out = True
+                    runner_last_name = self.players[id].last
+                    print('DP/FORCEOUT/FIELDERS CHOICE, ETC.')
+                    print(id)
+                    end = self.find_base_where_out_was_made(
+                            runner_last_name, self.active_atbat.des)
+                elif (event_num in self.actions):
+                    # and self.actions[event_num].player == id):
+                    # Reviews list the team asking for the call
+                    out = True
+                    runner_last_name = self.players[id].last
+                    print('MID AB OUT ON BASES')
+                    end = self.find_base_where_out_was_made(
+                            runner_last_name, self.actions[event_num].des)
+                else:
+                    raise Exception('Missing runner out??')
+
+        self.active_atbat.add_runner(Runner(id, start, end, event_num, out))
 
     def parse_base(self, base):
         if not base:
@@ -118,6 +178,23 @@ class GameParser:
             return int(base[0])
         else:
             raise Exception('Could not parse base: %s' % base)
+
+    def find_base_where_out_was_made(self, runner_last_name, des):
+        g = re.search(('%s %s %s' %
+                       (runner_last_name, OUTS_ON_BASES, LONG_BASE)), des)
+        if g:
+            return BASE_NUMBER[g.group(1)]
+
+        g = re.search(PICKS_OFF + ' %s at %s' % (runner_last_name, LONG_BASE),
+                      des)
+        if g:
+            print('HERE HERE HERE')
+            return BASE_NUMBER[g.group(1)]
+
+        else:
+            print(runner_last_name)
+            print(self.active_atbat.des)
+            raise Exception('Cannot figure out base')
 
     def add_action(self, action):
         if action.event_num not in self.actions:
