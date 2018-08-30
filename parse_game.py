@@ -30,7 +30,6 @@ class GameParser:
         self.active_atbat = None
         self.actions = {}
         self.players = players
-        self.active_pinch_runner = False
         self.parse_game(game_xml)
 
     def parse_game(self, xml):
@@ -81,9 +80,7 @@ class GameParser:
 
         self.active_atbat.scoring = get_scoring(self.active_atbat)
 
-        self.children_ct = len(atbat)
-        for i, child in enumerate(atbat):
-            self.child_no = i + 1
+        for child in atbat:
             if child.tag == 'runner':
                 self.parse_runner(child)
             elif child.tag in ['pitch', 'po']:
@@ -93,8 +90,7 @@ class GameParser:
 
         print(self.active_atbat.__dict__)
         print(self.active_atbat.scoring)
-        self.active_pinch_runner = False  # Reset in case swap not in runners
-        # input()
+        input()
 
     def parse_action(self, action):
         event_num = int(action.attrib['event_num'])
@@ -106,8 +102,7 @@ class GameParser:
 
         if (event == 'Offensive Sub' and
                 'Offensive Substitution: Pinch-runner' in des):
-            self.active_pinch_runner = True
-            self.pinch_runner_ctr = 0
+            pass
 
         self.add_action(a)
         print('%s: (%s) %s\n%s' % (action.tag,
@@ -120,52 +115,10 @@ class GameParser:
         start = self.parse_base(runner.attrib['start'])
         end = self.parse_base(runner.attrib['end'])
         event_num = int(runner.attrib['event_num'])
-        out = False
+        out = False  # Decide later which to make True
 
-        if (self.active_pinch_runner and
-                self.active_atbat.event_num == event_num):
-            self.pinch_runner_ctr += 1
-            if self.pinch_runner_ctr == 2:
-                self.active_pinch_runner = False
-
-            # TODO: Multiple PRs would break this, so need to validate PRs
-            # If 1st, lookup player name, replaces X in action des
-            # If 2nd, lookup player name, replaces X in action des
-            print('PR COUNTER %d' % self.pinch_runner_ctr)
-            return  # Ignore, this should be a pinch runner swap
-
-        # '' is either runner scoring, stranded to end inning, or out
-        # No runner tags when they don't move, unless stranded to end inning
-        if end == 0:
-            if runner.attrib.get('score') == 'T':  # Scores!
-                end = 4
-            elif (self.active_atbat.outs == 3 and
-                  self.active_atbat.event_num == event_num):  # Stranded
-                end = start
-                # Or possibly inning ending out on the bases
-                if (event_num in self.actions and
-                        self.actions[event_num].player == id):
-                    out = True
-                    runner_last_name = self.players[id].last
-                    print('INNING ENDING OUT ON BASES')
-                    end = self.find_base_where_out_was_made(
-                            runner_last_name, self.active_atbat.des)
-            else:  # Out on the bases
-                out = True
-                runner_last_name = self.players[id].last
-                if self.active_atbat.event_num == event_num:
-                    print('DP/FORCEOUT/FIELDERS CHOICE, ETC.')
-                    end = self.find_base_where_out_was_made(
-                            runner_last_name, self.active_atbat.des)
-                elif (event_num in self.actions):
-                    # and self.actions[event_num].player == id):
-                    # Reviews list the team asking for the call
-                    print('MID AB OUT ON BASES')
-                    end = self.find_base_where_out_was_made(
-                            runner_last_name, self.actions[event_num].des)
-                else:
-                    raise Exception('Missing runner out??')
-
+        if runner.attrib.get('score') == 'T':  # Scores!
+            end = 4
         self.active_atbat.add_runner(Runner(id, start, end, event_num, out))
 
     def parse_base(self, base):
@@ -197,10 +150,3 @@ class GameParser:
             self.actions[action.event_num] = action
         else:
             raise Exception('Duplicate action: %d' % action.event_num)
-
-
-if __name__ == '__main__':
-    with open('inning_all_1.xml') as f:
-        g = GameParser(f.read())
-        for event_num in sorted(g.actions.keys()):
-            print(g.actions[event_num])
