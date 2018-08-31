@@ -2,6 +2,7 @@ from collections import namedtuple
 
 Runner = namedtuple('Runner', 'id start end event_num out')
 Action = namedtuple('Action', 'event_num event des player')
+PinchRunnerSwap = namedtuple('PinchRunnerSwap', 'sub original base')
 
 class Inning:
     def __init__(self, num):
@@ -15,6 +16,12 @@ class Inning:
             self.bottom.append(event)
         else:
             self.top.append(event)
+
+    def get_current_half(self, inning):
+        if inning % 1.0:
+            return self.bottom
+        else:
+            return self.top
 
     def __str__(self):
         return 'Inning %d: %d %d' % (self.num, len(self.top), len(self.bottom))

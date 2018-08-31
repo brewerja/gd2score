@@ -2,7 +2,9 @@ import re
 import xml.etree.ElementTree as ET
 from copy import deepcopy
 
-from state import AtBat, Runner, Inning, Action
+from fuzzywuzzy import fuzz
+
+from state import AtBat, Runner, Inning, Action, PinchRunnerSwap
 from scoring import get_scoring
 
 BASES = ('1B', '2B', '3B')
@@ -30,7 +32,10 @@ class GameParser:
         self.active_atbat = None
         self.actions = {}
         self.players = players
+        self.pinch_runner_swap = None
+
         self.parse_game(game_xml)
+
 
     def parse_game(self, xml):
         game = ET.fromstring(xml)
@@ -49,7 +54,7 @@ class GameParser:
     def parse_half_inning(self, half_inning):
         if half_inning.tag == 'bottom':
             self.inning += 0.5
-        print('\nInning: %.1f' % self.inning)
+        #print('\nInning: %.1f' % self.inning)
 
         for event in half_inning:
             self.parse_event(event)
@@ -88,9 +93,33 @@ class GameParser:
             else:
                 raise Exception('Unknown atbat type: %s' % child.tag)
 
-        print(self.active_atbat.__dict__)
-        print(self.active_atbat.scoring)
-        input()
+        if self.pinch_runner_swap:
+            self.check_for_and_remove_pinch_runner_swap()
+
+        #print(self.active_atbat.__dict__)
+        #print(self.active_atbat.scoring)
+        #input()
+
+    def check_for_and_remove_pinch_runner_swap(self):
+        base = self.pinch_runner_swap.base
+        p_r, o_r = -1, -1
+        for i, runner in enumerate(self.active_atbat.runners):
+            if (runner.id == self.pinch_runner_swap.sub.id and
+                runner.start == 0 and runner.end == base):
+                p_r = i
+            elif (runner.id == self.pinch_runner_swap.original.id and
+                  runner.start == base and runner.end == 0):
+                o_r = i
+        if p_r >= 0 and o_r >= 0:
+            print('DELETING SWAP')
+            print(self.active_atbat.__dict__)
+            for i in sorted([p_r, o_r], reverse=True):
+                del self.active_atbat.runners[i]
+            print(self.active_atbat.__dict__)
+        else:
+            pass  # Swap not shown in runner tags...nothing to remove
+
+        self.pinch_runner_swap = None
 
     def parse_action(self, action):
         event_num = int(action.attrib['event_num'])
@@ -102,13 +131,38 @@ class GameParser:
 
         if (event == 'Offensive Sub' and
                 'Offensive Substitution: Pinch-runner' in des):
-            pass
+            self.set_pinch_runner_swap(des)
 
         self.add_action(a)
-        print('%s: (%s) %s\n%s' % (action.tag,
-                                   action.attrib['event_num'],
-                                   action.attrib['event'],
-                                   action.attrib['des']))
+        #print('%s: (%s) %s\n%s' % (action.tag,
+                                   #action.attrib['event_num'],
+                                   #action.attrib['event'],
+                                   #action.attrib['des']))
+
+    def set_pinch_runner_swap(self, des):
+        g = re.search('Pinch-runner (.*) replaces (.*).', des)
+        pinch_runner = g.group(1).strip()
+        original_runner = g.group(2).strip()
+        print(pinch_runner, '-->', original_runner)
+        pr_id, or_id = None, None
+        for player in self.players.values():  # TODO: Don't use fuzz
+            if fuzz.ratio(player.full_name(), pinch_runner) > 80:
+                pr_id = player.id
+            elif fuzz.ratio(player.full_name(), original_runner) > 80:
+                or_id = player.id
+        if not pr_id or not or_id:
+            raise Exception("Can't find pinch runner swap")
+
+        self.pinch_runner_swap = PinchRunnerSwap(
+            self.players[pr_id], self.players[or_id],
+            self.get_runner_last_base(or_id))
+
+    def get_runner_last_base(self, id):
+        for ab in reversed(self.active_inning.get_current_half(self.inning)):
+            for runner in ab.runners:
+                if runner.id == id:
+                    return runner.end
+        raise Exception("Can't find where PR starts")
 
     def parse_runner(self, runner):
         id = int(runner.attrib['id'])
@@ -142,7 +196,7 @@ class GameParser:
 
         else:
             print(runner_last_name)
-            print(self.active_atbat.des)
+            print(des)
             raise Exception('Cannot figure out base')
 
     def add_action(self, action):
