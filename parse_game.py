@@ -96,6 +96,73 @@ class GameParser:
         if self.pinch_runner_swap:
             self.check_for_and_remove_pinch_runner_swap()
 
+        if self.active_atbat.mid_pa_runners:
+            for runner in self.active_atbat.mid_pa_runners:
+                if not runner.end:
+                    runner.end = self.find_base_where_out_was_made(
+                        self.players[runner.id].last,
+                        self.actions[runner.event_num].des)
+                    runner.out = True
+                    print(self.actions[runner.event_num])
+                    print(runner.end)
+
+        #those who end="" are either out or stranded
+        runners_to_adjust = [r for r in self.active_atbat.runners if not r.end]
+        if runners_to_adjust:
+            #determine outs on the play (atbat.outs - prior atbat.outs)
+            current_half = self.active_inning.get_current_half(self.inning)
+            if current_half:
+                previous_ab_outs = current_half[-1].outs
+            else:
+                previous_ab_outs = 0
+            print('---------------------------------------')
+            print('Previous AB outs: %d' % previous_ab_outs)
+            outs_to_resolve = self.active_atbat.outs - previous_ab_outs
+            outs_to_resolve -= len(
+                [r for r in self.active_atbat.mid_pa_runners if r.out])
+
+            print('Outs to resolve: %d' % outs_to_resolve)
+            #determine if the batter is out: he will not be marked a runner if
+            #making an out...TODO ending inning with batter not out
+            batter_runner = [r for r in self.active_atbat.runners if r.id ==
+             self.active_atbat.batter]
+            # What if no runner for batter...but batter NOT out..inning ending
+            # out on bases by previous runners
+            if (not batter_runner and
+                    not re.match('With .* batting,', self.active_atbat.des)):
+                outs_to_resolve -= 1
+
+            print('Outs to resolve (after batter): %d' % outs_to_resolve)
+            if outs_to_resolve:
+                #decide which remaining runners are out and which are stranded
+                #For those that are out parse ab.des for bases where they made out
+                for runner in runners_to_adjust:
+                    try:
+                        runner.end = self.find_base_where_out_was_made(
+                            self.players[runner.id].last,
+                            self.active_atbat.des)
+                        runner.out = True
+                        print('Runner adjusted: %d %d' % (runner.id,
+                                                          runner.end))
+                    except Exception:
+                        pass
+                runners_out = [r for r in runners_to_adjust if r.out]
+                if len(runners_out) < outs_to_resolve:
+                    print(runners_out)
+                    print(outs_to_resolve)
+                    print(self.active_atbat.__dict__)
+                    raise Exception('Not all marked out that should be')
+                elif len(runners_out) != outs_to_resolve:
+                    print(runners_out)
+                    print(outs_to_resolve)
+                    print(self.active_atbat.__dict__)
+                    print('================NOT EQUAL=================')
+                #(if outs !=3 no one can be stranded)
+                if (len(runners_to_adjust) != len(runners_out) and
+                    self.active_atbat.outs != 3):
+                    print(self.active_atbat.__dict__)
+                    raise Exception('Runner should not be stranded')
+
         #print(self.active_atbat.__dict__)
         #print(self.active_atbat.scoring)
         #input()
@@ -112,10 +179,10 @@ class GameParser:
                 o_r = i
         if p_r >= 0 and o_r >= 0:
             print('DELETING SWAP')
-            print(self.active_atbat.__dict__)
+            #print(self.active_atbat.__dict__)
             for i in sorted([p_r, o_r], reverse=True):
                 del self.active_atbat.runners[i]
-            print(self.active_atbat.__dict__)
+            #print(self.active_atbat.__dict__)
         else:
             pass  # Swap not shown in runner tags...nothing to remove
 

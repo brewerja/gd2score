@@ -1,8 +1,24 @@
 from collections import namedtuple
 
-Runner = namedtuple('Runner', 'id start end event_num out')
+#Runner = namedtuple('Runner', 'id start end event_num out')
 Action = namedtuple('Action', 'event_num event des player')
 PinchRunnerSwap = namedtuple('PinchRunnerSwap', 'sub original base')
+
+
+class Runner:
+    def __init__(self, id, start, end, event_num, out=False):
+        self.id = id
+        self.start = start
+        self.end = end
+        self.event_num = event_num
+        self.out = out
+
+    def __str__(self):
+        return str(self.__dict__)
+
+    def __repr__(self):
+        return self.__str__()
+
 
 class Inning:
     def __init__(self, num):
