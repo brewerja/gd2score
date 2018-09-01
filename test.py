@@ -9,8 +9,8 @@ class PlayerTest(unittest.TestCase):
         self.assertEqual(p.__str__(), 'M. Scherzer')
 
     def test_abbrev_name(self):
-        p = Player(1, 'A. J.', 'Cole')
-        self.assertEqual(p.__str__(), 'A.J. Cole')
+        p = Player(1, 'A.J.', 'Cole')
+        self.assertEqual(p.__str__(), 'A. J. Cole')
 
 
 class PlayersParserTest(unittest.TestCase):
@@ -24,7 +24,7 @@ class PlayersParserTest(unittest.TestCase):
 
     def test_players_from_each_team(self):
         self.assertEqual(self.pp.players.get(519306).__str__(), 'S. Souza Jr.')
-        self.assertEqual(self.pp.players.get(572041).__str__(), 'A.J. Pollock')
+        self.assertEqual(self.pp.players.get(572041).__str__(), 'A. J. Pollock')
         self.assertEqual(self.pp.players.get(547179).__str__(), 'M. Lorenzen')
 
 
