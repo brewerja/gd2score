@@ -77,9 +77,3 @@ class AtBat:
             self.runners.append(runner)
         else:
             raise Exception('Runner bad ordering')
-
-
-# Think about pinch runners...need to know runner's "slot in the inning"
-
-# Intentional walk says on_2b for eatch pitch?? No runner element
-# Pick offs

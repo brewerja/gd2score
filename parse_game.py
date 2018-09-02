@@ -2,7 +2,7 @@ import re
 import logging
 import xml.etree.ElementTree as ET
 
-from state import AtBat, Runner, Inning, Action
+from models import AtBat, Runner, Inning, Action
 
 BASES = ('1B', '2B', '3B')
 
