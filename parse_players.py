@@ -29,9 +29,7 @@ class PlayersParser:
         self.parse_players(xml)
 
     def parse_players(self, xml):
-        game = ET.fromstring(xml)
-
-        for team in game:
+        for team in ET.fromstring(xml):
             self.parse_team(team)
 
     def parse_team(self, team):
@@ -40,7 +38,7 @@ class PlayersParser:
                 self.parse_player(player)
 
     def parse_player(self, player):
-        if player.tag not in ['coach']:
+        if player.tag == 'player':
             p = Player(int(player.attrib['id']), player.attrib['first'],
                        player.attrib['last'])
             self.players[p.id] = p

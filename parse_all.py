@@ -2,12 +2,14 @@ import shutil
 import tempfile
 import urllib.request
 from datetime import datetime, timedelta
+import logging
 
 from bs4 import BeautifulSoup
 
 from parse_game import GameParser
 from parse_players import PlayersParser
 from draw_scorecard import draw
+from enhance import RunnerFixer
 
 GD2_URL = 'https://gd2.mlb.com/components/game/mlb'
 
@@ -43,16 +45,20 @@ if __name__ == '__main__':
 #        game = GameParser(f.read())
 #    draw(game, players)
 
-    start_date = datetime(2018, 4, 15)
-    for date in [start_date + timedelta(days=x) for x in range(0, 15)]:
+    logging.basicConfig(format='%(levelname)s:%(message)s',
+                        level=logging.WARNING)
+
+    start_date = datetime(2018, 4, 1)  # 4/20 problem
+    for date in [start_date + timedelta(days=x) for x in range(0, 200)]:
         game_ids = list_game_ids(date.year, date.month, date.day)
         for game_id in game_ids:
             try:
                 game_url = get_game_url(game_id)
                 players = PlayersParser(get(game_url + 'players.xml')).players
                 print(game_id)
-                game = GameParser(get(game_url + 'inning/inning_all.xml'),
-                                  players)
+                game = GameParser(get(game_url + 'inning/inning_all.xml'))
+                RunnerFixer(game, players)
                 #draw(game, players)
+                break
             except urllib.error.HTTPError:
                 print(game_id, '404')
