@@ -150,6 +150,7 @@ class GameEnhancer:
             for runner in atbat.runners:
                 print('Held Runner: %s' % self.players[runner.id])
                 runner.start = runner.end
+                runner.event_num = atbat.event_num
 
     def fix_mid_pa_runners(self, atbat):
         """All runner tags in the middle of the plate appearance without an
