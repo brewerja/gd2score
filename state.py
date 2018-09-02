@@ -1,8 +1,6 @@
 from collections import namedtuple
 
-#Runner = namedtuple('Runner', 'id start end event_num out')
 Action = namedtuple('Action', 'event_num event des player')
-PinchRunnerSwap = namedtuple('PinchRunnerSwap', 'sub original base')
 
 
 class Runner:
