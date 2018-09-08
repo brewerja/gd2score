@@ -45,17 +45,22 @@ if __name__ == '__main__':
 #        game = GameParser(f.read())
 #    draw(game, players)
 
-    logging.basicConfig(format='%(levelname)s:%(message)s',
-                        level=logging.WARNING)
+    logging.basicConfig(#filename='parsing.log',
+                        format='%(levelname)s:%(message)s',
+                        level=logging.DEBUG)
 
-    start_date = datetime(2014, 4, 1)
+    start_date = datetime(2016, 6, 2)
     for date in [start_date + timedelta(days=x) for x in range(0, 200)]:
         game_ids = list_game_ids(date.year, date.month, date.day)
         for game_id in game_ids:
+            if game_id in ['gid_2014_04_16_atlmlb_phimlb_1',
+                           'gid_2014_05_23_arimlb_nynmlb_1',
+                           'gid_2014_08_12_arimlb_clemlb_1']:
+                continue
             try:
+                logging.info(game_id)
                 game_url = get_game_url(game_id)
                 players = PlayersParser(get(game_url + 'players.xml')).players
-                print(game_id)
                 game = GameParser(get(game_url + 'inning/inning_all.xml'))
                 game = GameEnhancer(game, players)
                 draw(game, players)
