@@ -1,5 +1,4 @@
 import re
-import logging
 import xml.etree.ElementTree as ET
 
 from models import AtBat, Runner, Inning, Action
@@ -33,7 +32,6 @@ class GameParser:
     def parse_half_inning(self, half_inning):
         if half_inning.tag == 'bottom':
             self.inning += 0.5
-        logging.debug('\nInning: %.1f' % self.inning)
 
         for event in half_inning:
             self.parse_event(event)
@@ -71,8 +69,6 @@ class GameParser:
             else:
                 raise Exception('Unknown atbat type: %s' % child.tag)
 
-        logging.debug(self.active_atbat.__dict__)
-
     def parse_action(self, action):
         event_num = int(action.attrib['event_num'])
         event = action.attrib['event']
@@ -101,7 +97,6 @@ class GameParser:
 
     def add_action(self, action):
         if action.event_num not in self.actions:
-            logging.debug(action)
             self.actions[action.event_num] = action
         else:
             raise Exception('Duplicate action: %d' % action.event_num)
