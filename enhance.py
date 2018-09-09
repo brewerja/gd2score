@@ -131,17 +131,18 @@ class GameEnhancer:
             atbat.scoring = get_scoring(atbat)
             self.fix_mid_pa_runners(atbat)
             if atbat.outs != 3:
-                self.resolve_runners_easy(atbat, atbat.outs - outs)
+                #self.resolve_runners_easy(atbat, atbat.outs - outs)
+                pass
             else:
-                continue
-            #self.fix_runners(atbat.outs - outs, atbat)
+                self.resolve_runners_3outs(atbat, atbat.outs - outs)
+
             self.hold_runners(active_runners, atbat)
 
             active_runners = [r for r in atbat.runners
                               if not r.out and r.end != 4]
             outs = atbat.outs
-            self.display_atbat(atbat)
-            #input()
+            if outs == 3:
+                self.display_atbat(atbat)
 
     def resolve_runners_easy(self, atbat, outs_on_play):
         """Easy aka outs !=3...if no batter runner, batter is out, but check
@@ -172,6 +173,79 @@ class GameEnhancer:
             atbat.add_runner(
                 Runner(atbat.batter, 0, base, atbat.event_num, True))
             logging.warning('Runner inserted: batter is out at %d' % base)
+
+    def resolve_runners_3outs(self, atbat, outs_on_play):
+        """Harder than with < 3 outs....
+        A safe batter runner not shown, runners can be either out or stranded,
+        but both are end='' and harder to tell apart."""
+        outs_on_play -= sum([1 for r in atbat.mid_pa_runners if r.out])
+        runners_to_adjust = [r for r in atbat.runners if not r.end]
+
+        # Don't think this should happen
+        batter_runner = [r for r in atbat.runners if r.id == atbat.batter]
+        if batter_runner:
+            logging.debug(atbat.__dict__)
+            logging.warning('batter runner with 3 outs')
+            input()
+
+        for runner in runners_to_adjust:
+            try:
+                runner.end = self.find_base_where_out_was_made(
+                    self.players[runner.id].last, atbat.des)
+                runner.out = True
+                logging.debug('Runner end adjusted: %s %d',
+                              self.players[runner.id], runner.end)
+            except:
+                pass
+
+        batter_out_on_base = 0
+        try:
+            logging.warning(self.players[atbat.batter].last)
+            batter_out_on_base = self.find_base_where_out_was_made(
+                self.players[atbat.batter].last, atbat.des)
+        except:
+            pass
+
+        if batter_out_on_base and atbat.event in ['Single', 'Double', 'Triple']:
+            atbat.add_runner(
+                Runner(atbat.batter, 0, batter_out_on_base, atbat.event_num, True))
+            logging.warning('Runner inserted: batter is out at %d',
+                            batter_out_on_base)
+
+        runner_outs = sum([1 for r in atbat.runners if r.out])
+        if outs_on_play - runner_outs:
+            # batter should be out
+            if atbat.scoring.result == 'on-base':
+                logging.debug('outs_on_play: %d, runner_outs: %d, bob: %d',
+                              outs_on_play, runner_outs, batter_out_on_base)
+                logging.debug(atbat.__dict__)
+                logging.debug('ON-BASE')
+                input()
+            logging.debug('Batter should be out')
+        else:
+            if not batter_out_on_base and atbat.event in ['Single', 'Double', 'Triple']:
+                base = ['Single', 'Double', 'Triple'].index(atbat.event) + 1
+                atbat.add_runner(Runner(atbat.batter, 0, base, atbat.event_num))
+                logging.warning('Runner inserted: batter to %d', base)
+            elif not batter_out_on_base and atbat.event != 'Runner Out':
+                atbat.add_runner(Runner(atbat.batter, 0, 1, atbat.event_num))
+                logging.warning('Runner inserted: batter to 1st')
+                pass
+            
+            if atbat.event not in ['Runner Out', 'Single', 'Double', 'Triple',
+                                   'Forceout', 'Fielders Choice Out',
+                                   'Grounded Into DP']:
+                # Triple Play
+                logging.debug(atbat.__dict__)
+                logging.debug(atbat.event)
+                logging.debug('HERE')
+                input()
+
+
+        stranded_runners = [r for r in atbat.runners if
+                            not r.end and not r.out]
+        for runner in stranded_runners:
+            runner.end = runner.start
 
     def display_atbat(self, atbat):
         logging.debug('%d %s (%s)', atbat.pa_num, atbat.scoring.code,
@@ -211,94 +285,6 @@ class GameEnhancer:
                     self.players[runner.id].last,
                     self.actions[runner.event_num].des)
                 runner.out = True
-
-    def is_batter_out(self, atbat):
-        """Tries to determine if the batter is out on the play. This is not
-        always accurate, most notably on double plays and inning ending plays
-        where the batter is safe."""
-        batter_runner = [r for r in atbat.runners if r.id == atbat.batter]
-
-        # 1. Simplest case, not the end of an inning, no batter runner
-        if not batter_runner and atbat.outs != 3:
-            if atbat.scoring.result != 'out':
-                logging.warning('Scoring result is not out, but batter out?')
-            if (atbat.event in ('Single', 'Double', 'Triple')):
-                atbat.add_runner(Runner(atbat.batter, 0, 0, atbat.event_num))
-                return False
-            return True
-
-        # 2. Read description to see if batter out mentioned
-        if re.search('%s out at' % self.players[atbat.batter].last, atbat.des):
-            if (atbat.event in ('Single', 'Double', 'Triple')):
-                atbat.add_runner(Runner(atbat.batter, 0, 0, atbat.event_num))
-                return False
-            return True
-
-        # End of inning, batter safe won't show up as a runner tag
-        # Previous case should catch a batter out if the scoring is 'on-base'
-        if (not batter_runner and atbat.outs == 3 and
-                atbat.scoring.result == 'on-base'):
-            return False
-
-        if (not batter_runner and
-                not re.match('With .* batting,', atbat.des) and
-                not len(re.findall('out at', atbat.des)) > 1):
-            # Triple play with the batter safe would error here ;-)
-            return True
-        else:
-            return False
-
-    def get_outs_to_resolve(self, atbat, outs_to_resolve):
-        """Returns the number of outs recorded on a play excluding runners
-        thrown out during the plate appearance and the batter if he is out."""
-        outs_to_resolve -= sum([1 for r in atbat.mid_pa_runners if r.out])
-        if self.is_batter_out(atbat):
-            outs_to_resolve -= 1
-        #logging.warning('Batter is out %s', self.is_batter_out(atbat))
-        logging.warning('Outs to resolve: %d', outs_to_resolve)
-        return outs_to_resolve
-
-    def fix_runners(self, outs_on_play, atbat):
-        """All runners should have both a start and end attribute. However the
-        API uses end="" to signify both the runner being put out as well as
-        runners stranded on base to end an inning. This examines all runners
-        without an ending base and attempts to record either an out or hold
-        runners who were stranded. Runners put out have their ending base
-        recorded based on examination of the atbat's description."""
-        runners_to_adjust = [r for r in atbat.runners if not r.end]
-        if not runners_to_adjust:
-            return
-
-        outs_to_resolve = self.get_outs_to_resolve(atbat, outs_on_play)
-        if outs_to_resolve:
-            runners_to_adjust = [r for r in atbat.runners if not r.end]
-            for runner in runners_to_adjust:
-                try:
-                    runner.end = self.find_base_where_out_was_made(
-                        self.players[runner.id].last, atbat.des)
-                    runner.out = True
-                    logging.debug('Runner end adjusted: %s %d',
-                                  self.players[runner.id], runner.end)
-                except Exception:
-                    pass
-
-            runners_out = [r for r in runners_to_adjust if r.out]
-            if len(runners_out) < outs_to_resolve:
-                logging.error(atbat.__dict__)
-                raise Exception('Not all marked out that should be')
-            elif len(runners_out) != outs_to_resolve:
-                logging.error(atbat.__dict__)
-                raise Exception('Over resolved')
-
-            # (if outs !=3 no one can be stranded)
-            if (len(runners_to_adjust) != len(runners_out) and
-                    atbat.outs != 3):
-                raise Exception('Runner should not be stranded')
-
-        # Stranded runners
-        for runner in atbat.runners:
-            if not runner.end:
-                runner.end = runner.start
 
     def find_base_where_out_was_made(self, runner_last_name, des):
         """Given the last name of a runner and a description of the play, this
