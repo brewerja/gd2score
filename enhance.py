@@ -1,9 +1,11 @@
 import re
 from copy import deepcopy
+import logging
 
 from fuzzywuzzy import fuzz
 
 from scoring import get_scoring
+from models import Runner
 
 BASE_NUMBER = {
     '1st': 1,
@@ -41,10 +43,16 @@ class GameEnhancer:
         for action in self.actions.values():
             if self.is_pinch_runner(action):
                 pinch_id, original_id = self.get_pinch_runner_swap(action)
+                logging.debug('%d replaces %d', pinch_id, original_id)
                 index = self.get_atbat_index(action.event_num)
                 base = self.get_runner_last_base(index, original_id)
-                self.remove_pinch_runner_swap(self.flat_atbats[index],
-                                              pinch_id, original_id, base)
+                logging.debug('swap at base: %d', base)
+                self.remove_pinch_runner_swap(
+                    self.flat_atbats[index].runners,
+                    pinch_id, original_id, base)
+                self.remove_pinch_runner_swap(
+                    self.flat_atbats[index].mid_pa_runners,
+                    pinch_id, original_id, base)
 
     def is_pinch_runner(self, action):
         return (action.event == 'Offensive Sub' and
@@ -56,8 +64,8 @@ class GameEnhancer:
         g = re.search('Pinch-runner (.*) replaces (.*).', action.des)
         pinch_runner_name = g.group(1).strip()
         original_runner_name = g.group(2).strip()
-
-        print(pinch_runner_name, 'replaces', original_runner_name)
+        logging.debug('%s replaces %s', pinch_runner_name,
+                      original_runner_name)
 
         pinch_runner_id = self.lookup_player(pinch_runner_name)
         original_runner_id = self.lookup_player(original_runner_name)
@@ -81,38 +89,34 @@ class GameEnhancer:
     def get_runner_last_base(self, swap_idx, original_runner_id):
         """Returns the base where the pinch runner swap occurs by searching
         the half inning backwards from when the swap happened."""
-        inning = self.flat_atbats[swap_idx].inning
+        inning_to_search = self.flat_atbats[swap_idx].inning
         for atbat in reversed(self.flat_atbats[:swap_idx]):
-            print(original_runner_id, self.players[original_runner_id])
-            print(atbat.__dict__)
-            #input()
             for runner in atbat.runners:
                 if runner.id == original_runner_id:
                     assert runner.end
                     return runner.end
-            if atbat.inning != inning:
+            if atbat.inning != inning_to_search:
                 break
         raise Exception('Base not found')
 
     def remove_pinch_runner_swap(
-            self, atbat, pinch_runner_id, original_runner_id, base):
+            self, runners, pinch_runner_id, original_runner_id, base):
         p_r, o_r = -1, -1
-        for i, runner in enumerate(atbat.runners):
+        for i, runner in enumerate(runners):
+            logging.debug('%d, %s', i, runner)
             if (runner.id == pinch_runner_id and
                     runner.start == 0 and runner.end == base):
                 p_r = i
             elif (runner.id == original_runner_id and
                   runner.start == base and runner.end == 0):
                 o_r = i
+        logging.debug('p_r: %d, o_r: %d', p_r, o_r)
         if p_r >= 0 and o_r >= 0:
-            print('DELETING SWAP')
-            print(atbat.__dict__)
+            logging.debug('Deleting runners from pinch swap')
             for i in sorted([p_r, o_r], reverse=True):
-                del atbat.runners[i]
-            print(atbat.__dict__)
+                del runners[i]
         else:
-            print('NO SWAP MADE')
-            pass  # Swap not shown in runner tags...nothing to remove
+            logging.debug('No runner swap')
 
     def fix_inning(self, inning):
         self.fix_half_inning(inning.top)
@@ -126,21 +130,66 @@ class GameEnhancer:
         for atbat in half_inning:
             atbat.scoring = get_scoring(atbat)
             self.fix_mid_pa_runners(atbat)
-            self.fix_runners(atbat.outs - outs, atbat)
+            if atbat.outs != 3:
+                self.resolve_runners_easy(atbat, atbat.outs - outs)
+            else:
+                continue
+            #self.fix_runners(atbat.outs - outs, atbat)
             self.hold_runners(active_runners, atbat)
 
             active_runners = [r for r in atbat.runners
                               if not r.out and r.end != 4]
             outs = atbat.outs
+            self.display_atbat(atbat)
+            #input()
 
-            print('%d %s %s' % (atbat.event_num, atbat.scoring, atbat.des))
-            print('%d outs' % atbat.outs)
-            for runner in atbat.mid_pa_runners:
-                print(self.players[runner.id], runner)
-            for runner in atbat.runners:
-                print(self.players[runner.id], runner)
-            #print(atbat.__dict__)
-            input()
+    def resolve_runners_easy(self, atbat, outs_on_play):
+        """Easy aka outs !=3...if no batter runner, batter is out, but check
+        also for a single/double/triple and out on bases."""
+        outs_on_play -= sum([1 for r in atbat.mid_pa_runners if r.out])
+        batter_runner = [r for r in atbat.runners if r.id == atbat.batter]
+        runners_to_adjust = [r for r in atbat.runners if not r.end]
+        runner_outs = len(runners_to_adjust)
+
+        batter_out = 1 if not batter_runner else 0
+        if outs_on_play != runner_outs + batter_out:
+            # Walkoff, runner on base that doesn't score
+            if self.flat_atbats[-1] == atbat:
+                return
+            else:
+                raise Exception()
+
+        for runner in runners_to_adjust:
+            runner.end = self.find_base_where_out_was_made(
+                self.players[runner.id].last, atbat.des)
+            runner.out = True
+            logging.debug('Runner end adjusted: %s %d',
+                          self.players[runner.id], runner.end)
+
+        if not batter_runner and atbat.event in ['Single', 'Double', 'Triple']:
+            base = self.find_base_where_out_was_made(
+                self.players[atbat.batter].last, atbat.des)
+            atbat.add_runner(
+                Runner(atbat.batter, 0, base, atbat.event_num, True))
+            logging.warning('Runner inserted: batter is out at %d' % base)
+
+    def display_atbat(self, atbat):
+        logging.debug('%d %s (%s)', atbat.pa_num, atbat.scoring.code,
+                      atbat.scoring.result)
+        logging.debug(atbat.des)
+        self.display_runners(atbat.mid_pa_runners)
+        if atbat.mid_pa_runners:
+            logging.debug('-----mid_pa above-----------')
+        self.display_runners(atbat.runners)
+        logging.debug('%d out', atbat.outs)
+
+    def display_runners(self, runners):
+        for runner in runners:
+            insert = ''
+            if runner.out:
+                insert = ' (out)'
+            logging.debug('%s: %d -> %d%s', self.players[runner.id],
+                          runner.start, runner.end, insert)
 
     def hold_runners(self, active_runners, atbat):
         """When all runners simply hold on a play, there are no runner tags.
@@ -148,7 +197,7 @@ class GameEnhancer:
         if not atbat.runners and active_runners:
             atbat.runners = deepcopy(active_runners)
             for runner in atbat.runners:
-                print('Held Runner: %s' % self.players[runner.id])
+                logging.debug('Held Runner: %s', self.players[runner.id])
                 runner.start = runner.end
                 runner.event_num = atbat.event_num
 
@@ -163,12 +212,38 @@ class GameEnhancer:
                     self.actions[runner.event_num].des)
                 runner.out = True
 
-    def batter_is_out(self, atbat):
+    def is_batter_out(self, atbat):
         """Tries to determine if the batter is out on the play. This is not
-        always accurate, most notably on double plays where the batter is
-        safe."""
+        always accurate, most notably on double plays and inning ending plays
+        where the batter is safe."""
         batter_runner = [r for r in atbat.runners if r.id == atbat.batter]
-        if (not batter_runner and not re.match('With .* batting,', atbat.des)):
+
+        # 1. Simplest case, not the end of an inning, no batter runner
+        if not batter_runner and atbat.outs != 3:
+            if atbat.scoring.result != 'out':
+                logging.warning('Scoring result is not out, but batter out?')
+            if (atbat.event in ('Single', 'Double', 'Triple')):
+                atbat.add_runner(Runner(atbat.batter, 0, 0, atbat.event_num))
+                return False
+            return True
+
+        # 2. Read description to see if batter out mentioned
+        if re.search('%s out at' % self.players[atbat.batter].last, atbat.des):
+            if (atbat.event in ('Single', 'Double', 'Triple')):
+                atbat.add_runner(Runner(atbat.batter, 0, 0, atbat.event_num))
+                return False
+            return True
+
+        # End of inning, batter safe won't show up as a runner tag
+        # Previous case should catch a batter out if the scoring is 'on-base'
+        if (not batter_runner and atbat.outs == 3 and
+                atbat.scoring.result == 'on-base'):
+            return False
+
+        if (not batter_runner and
+                not re.match('With .* batting,', atbat.des) and
+                not len(re.findall('out at', atbat.des)) > 1):
+            # Triple play with the batter safe would error here ;-)
             return True
         else:
             return False
@@ -177,10 +252,10 @@ class GameEnhancer:
         """Returns the number of outs recorded on a play excluding runners
         thrown out during the plate appearance and the batter if he is out."""
         outs_to_resolve -= sum([1 for r in atbat.mid_pa_runners if r.out])
-        print('Outs to resolve: %d' % outs_to_resolve)
-        if self.batter_is_out(atbat):
+        if self.is_batter_out(atbat):
             outs_to_resolve -= 1
-        print('Outs to resolve (after batter): %d' % outs_to_resolve)
+        #logging.warning('Batter is out %s', self.is_batter_out(atbat))
+        logging.warning('Outs to resolve: %d', outs_to_resolve)
         return outs_to_resolve
 
     def fix_runners(self, outs_on_play, atbat):
@@ -196,32 +271,31 @@ class GameEnhancer:
 
         outs_to_resolve = self.get_outs_to_resolve(atbat, outs_on_play)
         if outs_to_resolve:
+            runners_to_adjust = [r for r in atbat.runners if not r.end]
             for runner in runners_to_adjust:
                 try:
                     runner.end = self.find_base_where_out_was_made(
                         self.players[runner.id].last, atbat.des)
                     runner.out = True
-                    print('Runner adjusted: %d %d' % (runner.id, runner.end))
+                    logging.debug('Runner end adjusted: %s %d',
+                                  self.players[runner.id], runner.end)
                 except Exception:
                     pass
+
             runners_out = [r for r in runners_to_adjust if r.out]
             if len(runners_out) < outs_to_resolve:
-                print(runners_out)
-                print(outs_to_resolve)
-                print(atbat.__dict__)
+                logging.error(atbat.__dict__)
                 raise Exception('Not all marked out that should be')
             elif len(runners_out) != outs_to_resolve:
-                print(runners_out)
-                print(outs_to_resolve)
-                print(atbat.__dict__)
+                logging.error(atbat.__dict__)
                 raise Exception('Over resolved')
 
             # (if outs !=3 no one can be stranded)
             if (len(runners_to_adjust) != len(runners_out) and
                     atbat.outs != 3):
-                print(atbat.__dict__)
                 raise Exception('Runner should not be stranded')
 
+        # Stranded runners
         for runner in atbat.runners:
             if not runner.end:
                 runner.end = runner.start
@@ -229,6 +303,8 @@ class GameEnhancer:
     def find_base_where_out_was_made(self, runner_last_name, des):
         """Given the last name of a runner and a description of the play, this
         returns the base where that runner was put out."""
+        logging.debug('Last name: %s', runner_last_name)
+        logging.debug('Description: %s', des)
         g = re.search(('%s %s %s' %
                        (runner_last_name, OUTS_ON_BASES, LONG_BASE)), des)
         if g:
