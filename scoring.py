@@ -172,6 +172,8 @@ def get_scoring(ab):
             return Scoring('FC' + POSITIONS[g.group(1)], 'fc')
 
     elif ab.event == 'Fan interference':
+        if ab.outs == 3 or ab.batter not in [r.id for r in ab.runners]:
+            return Scoring('FI', 'out')
         return Scoring('FI', 'on-base')  # Nearly impossible to parse 4/18
 
     else:
