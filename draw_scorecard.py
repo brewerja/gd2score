@@ -1,10 +1,12 @@
 import svgwrite
+from svgwrite.shapes import Circle
 
 ORIGIN_X, ORIGIN_Y = 10, 10
 ATBAT_W, ATBAT_HT = 210, 20
 NAME_W = 100
 TEXT_HOP = 5
 SCORE_W = 25
+BASE_L = (ATBAT_W - NAME_W - SCORE_W) / 4
 
 
 class Scorecard:
@@ -58,6 +60,24 @@ class Scorecard:
                                  x=[ORIGIN_X + NAME_W + TEXT_HOP],
                                  y=[y - TEXT_HOP],
                                  class_=event.scoring.result))
+
+                b_r = [r for r in event.runners if r.id == event.batter]
+                for runner in event.runners:
+                    if runner.id == event.batter:
+                        x = ORIGIN_X + NAME_W
+                        x_end = x + SCORE_W + BASE_L * runner.end
+                        dwg.add(dwg.line((x, y), (x_end, y)))
+                        dwg.add(Circle((x_end, y), 2))
+                    else:
+                        x = ORIGIN_X + NAME_W + SCORE_W
+                        x_s = x + BASE_L * runner.start
+                        x_e = x + BASE_L * runner.end
+                        y_s = y - ATBAT_HT
+                        dwg.add(dwg.line((x_s, y_s),
+                                         (x_e, y)))
+                        if not runner.out:
+                            dwg.add(Circle((x_e, y), 2))
+
                 y += ATBAT_HT
             inning_end_y = y
 
