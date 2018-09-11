@@ -48,7 +48,7 @@ class GameEnhancer:
                 logging.debug('%d replaces %d', pinch_id, original_id)
                 index = self.get_atbat_index(action.event_num)
                 base = self.get_runner_last_base(index, original_id)
-                logging.debug('swap at base: %d', base)
+                logging.debug('Swap at base: %d', base)
                 self.remove_pinch_runner_swap(
                     self.flat_atbats[index].runners,
                     pinch_id, original_id, base)
@@ -90,14 +90,19 @@ class GameEnhancer:
 
     def get_runner_last_base(self, swap_idx, original_runner_id):
         """Returns the base where the pinch runner swap occurs by searching
-        the half inning backwards from when the swap happened."""
-        inning_to_search = self.flat_atbats[swap_idx].inning
+        the half inning backwards from when the swap happened. First, check for
+        runner advancement during the PA beofre when pinch runner appeared."""
+        mid_pa_advances = [r for r in self.flat_atbats[swap_idx].mid_pa_runners
+                          if r.id == original_runner_id]
+        if mid_pa_advances:
+            return max([r.end for r in mid_pa_advances])
+
         for atbat in reversed(self.flat_atbats[:swap_idx]):
             for runner in atbat.runners:
                 if runner.id == original_runner_id:
                     assert runner.end
                     return runner.end
-            if atbat.inning != inning_to_search:
+            if atbat.inning != self.flat_atbats[swap_idx].inning:
                 break
         raise Exception('Base not found')
 
