@@ -151,7 +151,6 @@ class GameEnhancer:
                               if not r.out and r.end != 4]
             outs = atbat.outs
             self.display_atbat(atbat)
-            input()
 
     def resolve_runners_easy(self, atbat, outs_on_play):
         """When there's less than 3 outs, the lack of a runner tag for the
