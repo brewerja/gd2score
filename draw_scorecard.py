@@ -1,5 +1,9 @@
+import copy
+
 import svgwrite
-from svgwrite.shapes import Circle
+from svgwrite.shapes import Circle, Line, Rect
+from svgwrite.text import Text
+from svgwrite.container import Group
 
 ORIGIN_X, ORIGIN_Y = 10, 10
 ATBAT_W, ATBAT_HT = 210, 20
@@ -7,7 +11,13 @@ NAME_W = 100
 TEXT_HOP = 5
 SCORE_W = 25
 BASE_L = (ATBAT_W - NAME_W - SCORE_W) / 4
+SEPARATION = 30
 
+AWAY_NAME_X = ORIGIN_X + NAME_W - TEXT_HOP
+AWAY_SCORING_X = ORIGIN_X + NAME_W + TEXT_HOP
+
+HOME_NAME_X = ORIGIN_X + 2 * ATBAT_W + SEPARATION - NAME_W + TEXT_HOP
+HOME_SCORING_X = HOME_NAME_X - 2 * TEXT_HOP
 
 class Scorecard:
     def __init__(self, game, players):
@@ -16,10 +26,11 @@ class Scorecard:
 
         dwg = svgwrite.Drawing('test.svg', debug=True, profile='full')
         dwg.add_stylesheet('style.css', 'styling')
+        self.dwg = dwg
 
         self.set_game_height()
-        self.draw_team_boxes(dwg)
-        self.draw_names_and_scoring(dwg)
+        self.draw_team_boxes()
+        self.draw_game()
 
         dwg.save()
 
@@ -27,81 +38,104 @@ class Scorecard:
         self.game_ht = sum([max(len(inning.top), len(inning.bottom))
                             for inning in self.game.innings]) * ATBAT_HT
 
-    def draw_team_boxes(self, dwg):
-        dwg.add(dwg.rect((ORIGIN_X, ORIGIN_Y), (ATBAT_W, self.game_ht)))
-        dwg.add(dwg.rect((ORIGIN_X + ATBAT_W * 1.25, ORIGIN_Y),
-                         (ATBAT_W, self.game_ht)))
+    def get_team_box(self):
+        box = Group()
+        box.add(Rect((ORIGIN_X, ORIGIN_Y), (ATBAT_W, self.game_ht)))
+        box.add(Line((ORIGIN_X + NAME_W, ORIGIN_Y),
+                     (ORIGIN_X + NAME_W, ORIGIN_Y + self.game_ht)))
+        box.add(Line((ORIGIN_X + NAME_W + SCORE_W, ORIGIN_Y),
+                     (ORIGIN_X + NAME_W + SCORE_W, ORIGIN_Y + self.game_ht)))
+        return box
 
-        dwg.add(dwg.line((ORIGIN_X + NAME_W, ORIGIN_Y),
-                         (ORIGIN_X + NAME_W, ORIGIN_Y + self.game_ht)))
-        dwg.add(dwg.line((ORIGIN_X + NAME_W + SCORE_W,
-                          ORIGIN_Y),
-                         (ORIGIN_X + NAME_W + SCORE_W,
-                          ORIGIN_Y + self.game_ht)))
-        dwg.add(dwg.line((ORIGIN_X + ATBAT_W * 2.25 - NAME_W, ORIGIN_Y),
-                         (ORIGIN_X + ATBAT_W * 2.25 - NAME_W,
-                          ORIGIN_Y + self.game_ht)))
-        dwg.add(dwg.line((ORIGIN_X + ATBAT_W * 2.25 - NAME_W - SCORE_W,
-                          ORIGIN_Y),
-                         (ORIGIN_X + ATBAT_W * 2.25 - NAME_W - SCORE_W,
-                          ORIGIN_Y + self.game_ht)))
+    def draw_team_boxes(self):
+        away_team = self.get_team_box()
+        away_team['id'] = 'away_team'
 
-    def draw_names_and_scoring(self, dwg):
-        y = ORIGIN_Y + ATBAT_HT
+        home_team = self.get_team_box()
+        home_team['id'] = 'home_team'
+        home_team.translate(SEPARATION + 2 * (ORIGIN_X + ATBAT_W), 0)
+        home_team.scale(-1, 1)
+
+        self.dwg.add(away_team)
+        self.dwg.add(home_team)
+
+    def draw_game(self):
+        self.y = ORIGIN_Y + ATBAT_HT
         for inning in self.game.innings:
-            inning_start_y = y
-            for event in inning.top:
-                dwg.add(dwg.text(self.players.get(event.batter),
-                                 x=[ORIGIN_X + NAME_W - TEXT_HOP],
-                                 y=[y - TEXT_HOP],
-                                 class_='batter-name',
-                                 text_anchor='end'))
-                dwg.add(dwg.text(event.scoring.code,
-                                 x=[ORIGIN_X + NAME_W + TEXT_HOP],
-                                 y=[y - TEXT_HOP],
-                                 class_=event.scoring.result))
+            self.draw_inning(inning)
 
-                b_r = [r for r in event.runners if r.id == event.batter]
-                for runner in event.runners:
-                    if runner.id == event.batter:
-                        x = ORIGIN_X + NAME_W
-                        x_end = x + SCORE_W + BASE_L * runner.end
-                        dwg.add(dwg.line((x, y), (x_end, y)))
-                        dwg.add(Circle((x_end, y), 2))
-                    else:
-                        x = ORIGIN_X + NAME_W + SCORE_W
-                        x_s = x + BASE_L * runner.start
-                        x_e = x + BASE_L * runner.end
-                        y_s = y - ATBAT_HT
-                        dwg.add(dwg.line((x_s, y_s),
-                                         (x_e, y)))
-                        if not runner.out:
-                            dwg.add(Circle((x_e, y), 2))
+    def draw_inning(self, inning):
+        inning_start_y = self.y
+        inning_end_y = 0
+        self.name_x = AWAY_NAME_X
+        self.scoring_x = AWAY_SCORING_X
+        self.name_anchor='end'
+        self.scoring_anchor='start'
+        self.flip = False
+        for half_inning in [inning.top, inning.bottom]:
+            self.y = inning_start_y
+            self.draw_half_inning(half_inning)
+            self.name_x = HOME_NAME_X
+            self.scoring_x = HOME_SCORING_X
+            self.name_anchor='start'
+            self.scoring_anchor='end'
+            inning_end_y = max(inning_end_y, self.y)
+            self.flip = True
+        self.y = inning_end_y
+        self.dwg.add(Line((ORIGIN_X, self.y - ATBAT_HT),
+                          (ORIGIN_X + ATBAT_W, self.y - ATBAT_HT)))
+        self.dwg.add(Line((ORIGIN_X + ATBAT_W + SEPARATION, self.y - ATBAT_HT),
+                          (ORIGIN_X + 2 * ATBAT_W + SEPARATION,
+                           self.y - ATBAT_HT)))
 
-                y += ATBAT_HT
-            inning_end_y = y
+    def draw_half_inning(self, half_inning):
+        for atbat in half_inning:
+            self.draw_atbat(atbat)
+            self.y += ATBAT_HT
 
-            y = inning_start_y
-            for event in inning.bottom:
-                dwg.add(dwg.text(self.players.get(event.batter),
-                                 x=[(ORIGIN_X + ATBAT_W * 2.25 -
-                                     NAME_W + TEXT_HOP)],
-                                 y=[y - TEXT_HOP],
-                                 class_='batter-name'))
-                dwg.add(dwg.text(event.scoring.code,
-                                 x=[(ORIGIN_X + ATBAT_W * 2.25 -
-                                     NAME_W - TEXT_HOP)],
-                                 y=[y - TEXT_HOP],
-                                 text_anchor='end',
-                                 class_=event.scoring.result))
-                y += ATBAT_HT
+    def draw_atbat(self, atbat):
+        name = Text(self.players.get(atbat.batter),
+                    x=[self.name_x],
+                    y=[self.y - TEXT_HOP],
+                    class_='batter-name',
+                    text_anchor=self.name_anchor)
+        scoring = Text(atbat.scoring.code,
+                       x=[self.scoring_x],
+                       y=[self.y - TEXT_HOP],
+                       class_=atbat.scoring.result,
+                       text_anchor=self.scoring_anchor)
+        self.dwg.add(name)
+        self.dwg.add(scoring)
+        self.draw_runners(atbat)
 
-            y = max(inning_end_y, y)
-
-            # Inning lines
-            dwg.add(dwg.line((ORIGIN_X, y - ATBAT_HT),
-                             (ORIGIN_X + ATBAT_W, y - ATBAT_HT)))
-            dwg.add(dwg.line((ORIGIN_X + ATBAT_W * 1.25,
-                              y - ATBAT_HT),
-                             (ORIGIN_X + ATBAT_W * 1.25 + ATBAT_W,
-                              y - ATBAT_HT)))
+    def draw_runners(self, atbat):
+        b_r = [r for r in atbat.runners if r.id == atbat.batter]
+        for runner in atbat.runners:
+            if runner.id == atbat.batter:
+                x = ORIGIN_X + NAME_W
+                x_end = x + SCORE_W + BASE_L * runner.end
+                line = Line((x, self.y), (x_end, self.y))
+                circ = Circle((x_end, self.y), 2)
+                if self.flip:
+                    line.translate(SEPARATION + 2 * (ORIGIN_X + ATBAT_W), 0)
+                    line.scale(-1, 1)
+                    circ.translate(SEPARATION + 2 * (ORIGIN_X + ATBAT_W), 0)
+                    circ.scale(-1, 1)
+                self.dwg.add(line)
+                self.dwg.add(circ)
+            else:
+                x = ORIGIN_X + NAME_W + SCORE_W
+                x_s = x + BASE_L * runner.start
+                x_e = x + BASE_L * runner.end
+                y_s = self.y - ATBAT_HT
+                line = Line((x_s, y_s), (x_e, self.y))
+                if self.flip:
+                    line.translate(SEPARATION + 2 * (ORIGIN_X + ATBAT_W), 0)
+                    line.scale(-1, 1)
+                self.dwg.add(line)
+                if not runner.out:
+                    circ = Circle((x_e, self.y), 2)
+                    if self.flip:
+                        circ.translate(SEPARATION + 2 * (ORIGIN_X + ATBAT_W), 0)
+                        circ.scale(-1, 1)
+                    self.dwg.add(circ)
