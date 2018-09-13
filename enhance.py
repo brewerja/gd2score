@@ -85,7 +85,7 @@ class GameEnhancer:
 
     def get_atbat_index(self, event_num):
         for i, atbat in enumerate(self.flat_atbats):
-            if atbat.event_num > event_num:
+            if atbat.event_num >= event_num:
                 return i
 
     def get_runner_last_base(self, swap_idx, original_runner_id):
@@ -93,7 +93,7 @@ class GameEnhancer:
         the half inning backwards from when the swap happened. First, check for
         runner advancement during the PA beofre when pinch runner appeared."""
         mid_pa_advances = [r for r in self.flat_atbats[swap_idx].mid_pa_runners
-                          if r.id == original_runner_id]
+                           if r.id == original_runner_id]
         if mid_pa_advances:
             return max([r.end for r in mid_pa_advances])
 
@@ -251,14 +251,30 @@ class GameEnhancer:
                           runner.start, runner.end, insert)
 
     def hold_runners(self, active_runners, atbat):
-        """When all runners simply hold on a play, there are no runner tags.
-        This creates Runner instances to record holding on a base."""
-        if not atbat.runners and active_runners:
-            atbat.runners = deepcopy(active_runners)
-            for runner in atbat.runners:
-                logging.debug('Held Runner: %s', self.players[runner.id])
-                runner.start = runner.end
-                runner.event_num = atbat.event_num
+        """The schema only represents runner movement. We need a record in each
+        atbat even when the runners hold."""
+        mid_pa_safe_runner_ids = set(
+            [r.id for r in atbat.mid_pa_runners if not r.out])
+        runner_ids = set([r.id for r in atbat.runners])
+
+        for runner in active_runners:
+            if (runner.id in mid_pa_safe_runner_ids and
+                    runner.id not in runner_ids):
+                end = self.get_mid_pa_end_base(atbat, runner.id)
+                atbat.runners.append(
+                    Runner(runner.id, end, end, atbat.event_num))
+            elif runner.id not in runner_ids:
+                end = self.get_runner_end_base_previous_pa(atbat, runner.id)
+                atbat.runners.append(
+                    Runner(runner.id, end, end, atbat.event_num))
+
+    def get_mid_pa_end_base(self, atbat, runner_id):
+        return max([r.end for r in atbat.mid_pa_runners if r.id == runner_id])
+
+    def get_runner_end_base_previous_pa(self, atbat, runner_id):
+        atbat_idx = self.get_atbat_index(atbat.event_num)
+        prev_atbat = self.flat_atbats[atbat_idx - 1]
+        return [r for r in prev_atbat.runners if r.id == runner_id][0].end
 
     def fix_mid_pa_runners(self, atbat):
         """All runner tags in the middle of the plate appearance without an
