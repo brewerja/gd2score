@@ -74,6 +74,9 @@ class Scorecard:
         for inning in self.game.innings:
             self.draw_inning(inning)
 
+    def is_home_team_batting(self, inning):
+        return inning % 1.0
+
     def draw_inning(self, inning):
         inning_start_y = self.y
         inning_end_y = 0
@@ -81,7 +84,6 @@ class Scorecard:
         self.scoring_x = AWAY_SCORING_X
         self.name_anchor = 'end'
         self.scoring_anchor = 'start'
-        self.flip = False
         for half_inning in [inning.top, inning.bottom]:
             self.y = inning_start_y
             self.draw_half_inning(half_inning)
@@ -90,7 +92,6 @@ class Scorecard:
             self.name_anchor = 'start'
             self.scoring_anchor = 'end'
             inning_end_y = max(inning_end_y, self.y)
-            self.flip = True
         self.y = inning_end_y
 
     def draw_half_inning(self, half_inning):
@@ -116,6 +117,10 @@ class Scorecard:
         self.draw_runners(atbat, atbat_group)
         self.dwg.add(atbat_group)
 
+    def flip(self, graphic):
+        graphic.translate(SEPARATION + 2 * (ORIGIN_X + ATBAT_W), 0)
+        graphic.scale(-1, 1)
+
     def draw_mid_pa_runners(self, atbat, atbat_group):
         for runner in atbat.mid_pa_runners:
             x = ORIGIN_X + NAME_W + SCORE_W
@@ -123,15 +128,13 @@ class Scorecard:
             x_e = x + BASE_L * runner.end
             y_s = self.y - ATBAT_HT
             line = Line((x_s, y_s), (x_e, self.y - ATBAT_HT / 2))
-            if self.flip:
-                line.translate(SEPARATION + 2 * (ORIGIN_X + ATBAT_W), 0)
-                line.scale(-1, 1)
+            if self.is_home_team_batting(atbat.inning):
+                self.flip(line)
             atbat_group.add(line)
             if not runner.out:
                 circ = Circle((x_e, self.y - ATBAT_HT / 2), 2)
-                if self.flip:
-                    circ.translate(SEPARATION + 2 * (ORIGIN_X + ATBAT_W), 0)
-                    circ.scale(-1, 1)
+                if self.is_home_team_batting(atbat.inning):
+                    self.flip(circ)
                 atbat_group.add(circ)
 
     def draw_runners(self, atbat, atbat_group):
@@ -142,11 +145,9 @@ class Scorecard:
                 x_end = x + SCORE_W + BASE_L * runner.end
                 line = Line((x, self.y), (x_end, self.y))
                 circ = Circle((x_end, self.y), 2)
-                if self.flip:
-                    line.translate(SEPARATION + 2 * (ORIGIN_X + ATBAT_W), 0)
-                    line.scale(-1, 1)
-                    circ.translate(SEPARATION + 2 * (ORIGIN_X + ATBAT_W), 0)
-                    circ.scale(-1, 1)
+                if self.is_home_team_batting(atbat.inning):
+                    self.flip(line)
+                    self.flip(circ)
                 atbat_group.add(line)
                 atbat_group.add(circ)
             else:
@@ -160,14 +161,11 @@ class Scorecard:
                     x_s = x + BASE_L * max([r.end for r in mid_pa_runners])
                     y_s = self.y - ATBAT_HT / 2
                 line = Line((x_s, y_s), (x_e, self.y))
-                if self.flip:
-                    line.translate(SEPARATION + 2 * (ORIGIN_X + ATBAT_W), 0)
-                    line.scale(-1, 1)
+                if self.is_home_team_batting(atbat.inning):
+                    self.flip(line)
                 atbat_group.add(line)
                 if not runner.out:
                     circ = Circle((x_e, self.y), 2)
-                    if self.flip:
-                        circ.translate(
-                            SEPARATION + 2 * (ORIGIN_X + ATBAT_W), 0)
-                        circ.scale(-1, 1)
+                    if self.is_home_team_batting(atbat.inning):
+                        self.flip(circ)
                     atbat_group.add(circ)
