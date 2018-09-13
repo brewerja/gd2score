@@ -91,18 +91,8 @@ class Scorecard:
     def draw_atbat(self, atbat):
         self.set_x_and_anchor(atbat.inning)
         atbat_group = Group()
-        name = Text(self.players.get(atbat.batter),
-                    x=[self.name_x],
-                    y=[self.y - TEXT_HOP],
-                    class_='batter-name',
-                    text_anchor=self.name_anchor)
-        atbat_group.add(name)
-        scoring = Text(atbat.scoring.code,
-                       x=[self.scoring_x],
-                       y=[self.y - TEXT_HOP],
-                       class_=atbat.scoring.result,
-                       text_anchor=self.scoring_anchor)
-        atbat_group.add(scoring)
+        atbat_group.add(self.get_batter_name_text(atbat))
+        atbat_group.add(self.get_scoring_text(atbat))
         self.draw_mid_pa_runners(atbat, atbat_group)
         self.draw_runners(atbat, atbat_group)
         self.dwg.add(atbat_group)
@@ -118,6 +108,18 @@ class Scorecard:
             self.scoring_x = AWAY_SCORING_X
             self.name_anchor = 'end'
             self.scoring_anchor = 'start'
+
+    def get_batter_name_text(self, atbat):
+        return Text(self.players.get(atbat.batter),
+                    x=[self.name_x], y=[self.y - TEXT_HOP],
+                    class_='batter-name',
+                    text_anchor=self.name_anchor)
+
+    def get_scoring_text(self, atbat):
+        return Text(atbat.scoring.code,
+                    x=[self.scoring_x], y=[self.y - TEXT_HOP],
+                    class_=atbat.scoring.result,
+                    text_anchor=self.scoring_anchor)
 
     def draw_mid_pa_runners(self, atbat, atbat_group):
         for runner in atbat.mid_pa_runners:
