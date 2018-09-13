@@ -14,10 +14,10 @@ BASE_L = (ATBAT_W - NAME_W - SCORE_W) / 4
 SEPARATION = 30
 
 AWAY_NAME_X = ORIGIN_X + NAME_W - TEXT_HOP
-AWAY_SCORING_X = ORIGIN_X + NAME_W + TEXT_HOP
+AWAY_SCORING_X = ORIGIN_X + NAME_W + SCORE_W / 2
 
 HOME_NAME_X = ORIGIN_X + 2 * ATBAT_W + SEPARATION - NAME_W + TEXT_HOP
-HOME_SCORING_X = HOME_NAME_X - 2 * TEXT_HOP
+HOME_SCORING_X = HOME_NAME_X - TEXT_HOP - SCORE_W / 2
 
 
 class Scorecard:
@@ -102,12 +102,10 @@ class Scorecard:
             self.name_x = HOME_NAME_X
             self.scoring_x = HOME_SCORING_X
             self.name_anchor = 'start'
-            self.scoring_anchor = 'end'
         else:
             self.name_x = AWAY_NAME_X
             self.scoring_x = AWAY_SCORING_X
             self.name_anchor = 'end'
-            self.scoring_anchor = 'start'
 
     def get_batter_name_text(self, atbat):
         return Text(self.players.get(atbat.batter),
@@ -119,7 +117,7 @@ class Scorecard:
         return Text(atbat.scoring.code,
                     x=[self.scoring_x], y=[self.y - TEXT_HOP],
                     class_=atbat.scoring.result,
-                    text_anchor=self.scoring_anchor)
+                    text_anchor='middle')
 
     def draw_mid_pa_runners(self, atbat, atbat_group):
         for runner in atbat.mid_pa_runners:
