@@ -25,16 +25,15 @@ class Scorecard:
         self.game = game
         self.players = players
 
-        dwg = Drawing('test.svg', debug=True, profile='full')
-        dwg.add_stylesheet('style.css', 'styling')
-        self.dwg = dwg
+        self.dwg = Drawing('test.svg', debug=True, profile='full')
+        self.dwg.add_stylesheet('style.css', 'styling')
 
         self.set_game_height()
         self.draw_team_boxes()
         self.draw_inning_separators()
         self.draw_game()
 
-        dwg.save()
+        self.dwg.save()
 
     def set_game_height(self):
         self.game_ht = sum([max(len(inning.top), len(inning.bottom))
