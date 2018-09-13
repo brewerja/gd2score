@@ -94,21 +94,23 @@ class Scorecard:
             self.y += ATBAT_HT
 
     def draw_atbat(self, atbat):
+        atbat_group = Group()
         name = Text(self.players.get(atbat.batter),
                     x=[self.name_x],
                     y=[self.y - TEXT_HOP],
                     class_='batter-name',
                     text_anchor=self.name_anchor)
+        atbat_group.add(name)
         scoring = Text(atbat.scoring.code,
                        x=[self.scoring_x],
                        y=[self.y - TEXT_HOP],
                        class_=atbat.scoring.result,
                        text_anchor=self.scoring_anchor)
-        self.dwg.add(name)
-        self.dwg.add(scoring)
-        self.draw_runners(atbat)
+        atbat_group.add(scoring)
+        self.draw_runners(atbat, atbat_group)
+        self.dwg.add(atbat_group)
 
-    def draw_runners(self, atbat):
+    def draw_runners(self, atbat, atbat_group):
         b_r = [r for r in atbat.runners if r.id == atbat.batter]
         for runner in atbat.runners:
             if runner.id == atbat.batter:
@@ -121,8 +123,8 @@ class Scorecard:
                     line.scale(-1, 1)
                     circ.translate(SEPARATION + 2 * (ORIGIN_X + ATBAT_W), 0)
                     circ.scale(-1, 1)
-                self.dwg.add(line)
-                self.dwg.add(circ)
+                atbat_group.add(line)
+                atbat_group.add(circ)
             else:
                 x = ORIGIN_X + NAME_W + SCORE_W
                 x_s = x + BASE_L * runner.start
@@ -132,10 +134,10 @@ class Scorecard:
                 if self.flip:
                     line.translate(SEPARATION + 2 * (ORIGIN_X + ATBAT_W), 0)
                     line.scale(-1, 1)
-                self.dwg.add(line)
+                atbat_group.add(line)
                 if not runner.out:
                     circ = Circle((x_e, self.y), 2)
                     if self.flip:
                         circ.translate(SEPARATION + 2 * (ORIGIN_X + ATBAT_W), 0)
                         circ.scale(-1, 1)
-                    self.dwg.add(circ)
+                    atbat_group.add(circ)
