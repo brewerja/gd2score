@@ -19,6 +19,7 @@ AWAY_SCORING_X = ORIGIN_X + NAME_W + TEXT_HOP
 HOME_NAME_X = ORIGIN_X + 2 * ATBAT_W + SEPARATION - NAME_W + TEXT_HOP
 HOME_SCORING_X = HOME_NAME_X - 2 * TEXT_HOP
 
+
 class Scorecard:
     def __init__(self, game, players):
         self.game = game
@@ -78,16 +79,16 @@ class Scorecard:
         inning_end_y = 0
         self.name_x = AWAY_NAME_X
         self.scoring_x = AWAY_SCORING_X
-        self.name_anchor='end'
-        self.scoring_anchor='start'
+        self.name_anchor = 'end'
+        self.scoring_anchor = 'start'
         self.flip = False
         for half_inning in [inning.top, inning.bottom]:
             self.y = inning_start_y
             self.draw_half_inning(half_inning)
             self.name_x = HOME_NAME_X
             self.scoring_x = HOME_SCORING_X
-            self.name_anchor='start'
-            self.scoring_anchor='end'
+            self.name_anchor = 'start'
+            self.scoring_anchor = 'end'
             inning_end_y = max(inning_end_y, self.y)
             self.flip = True
         self.y = inning_end_y
@@ -166,6 +167,7 @@ class Scorecard:
                 if not runner.out:
                     circ = Circle((x_e, self.y), 2)
                     if self.flip:
-                        circ.translate(SEPARATION + 2 * (ORIGIN_X + ATBAT_W), 0)
+                        circ.translate(
+                            SEPARATION + 2 * (ORIGIN_X + ATBAT_W), 0)
                         circ.scale(-1, 1)
                     atbat_group.add(circ)
