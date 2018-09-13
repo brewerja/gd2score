@@ -74,23 +74,12 @@ class Scorecard:
         for inning in self.game.innings:
             self.draw_inning(inning)
 
-    def is_home_team_batting(self, inning):
-        return inning % 1.0
-
     def draw_inning(self, inning):
         inning_start_y = self.y
         inning_end_y = 0
-        self.name_x = AWAY_NAME_X
-        self.scoring_x = AWAY_SCORING_X
-        self.name_anchor = 'end'
-        self.scoring_anchor = 'start'
         for half_inning in [inning.top, inning.bottom]:
             self.y = inning_start_y
             self.draw_half_inning(half_inning)
-            self.name_x = HOME_NAME_X
-            self.scoring_x = HOME_SCORING_X
-            self.name_anchor = 'start'
-            self.scoring_anchor = 'end'
             inning_end_y = max(inning_end_y, self.y)
         self.y = inning_end_y
 
@@ -100,6 +89,7 @@ class Scorecard:
             self.y += ATBAT_HT
 
     def draw_atbat(self, atbat):
+        self.set_x_and_anchor(atbat.inning)
         atbat_group = Group()
         name = Text(self.players.get(atbat.batter),
                     x=[self.name_x],
@@ -117,9 +107,17 @@ class Scorecard:
         self.draw_runners(atbat, atbat_group)
         self.dwg.add(atbat_group)
 
-    def flip(self, graphic):
-        graphic.translate(SEPARATION + 2 * (ORIGIN_X + ATBAT_W), 0)
-        graphic.scale(-1, 1)
+    def set_x_and_anchor(self, inning):
+        if self.is_home_team_batting(inning):
+            self.name_x = HOME_NAME_X
+            self.scoring_x = HOME_SCORING_X
+            self.name_anchor = 'start'
+            self.scoring_anchor = 'end'
+        else:
+            self.name_x = AWAY_NAME_X
+            self.scoring_x = AWAY_SCORING_X
+            self.name_anchor = 'end'
+            self.scoring_anchor = 'start'
 
     def draw_mid_pa_runners(self, atbat, atbat_group):
         for runner in atbat.mid_pa_runners:
@@ -169,3 +167,10 @@ class Scorecard:
                     if self.is_home_team_batting(atbat.inning):
                         self.flip(circ)
                     atbat_group.add(circ)
+
+    def flip(self, graphic):
+        graphic.translate(SEPARATION + 2 * (ORIGIN_X + ATBAT_W), 0)
+        graphic.scale(-1, 1)
+
+    def is_home_team_batting(self, inning):
+        return inning % 1.0
