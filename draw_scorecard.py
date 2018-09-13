@@ -111,8 +111,27 @@ class Scorecard:
                        class_=atbat.scoring.result,
                        text_anchor=self.scoring_anchor)
         atbat_group.add(scoring)
+        self.draw_mid_pa_runners(atbat, atbat_group)
         self.draw_runners(atbat, atbat_group)
         self.dwg.add(atbat_group)
+
+    def draw_mid_pa_runners(self, atbat, atbat_group):
+        for runner in atbat.mid_pa_runners:
+            x = ORIGIN_X + NAME_W + SCORE_W
+            x_s = x + BASE_L * runner.start
+            x_e = x + BASE_L * runner.end
+            y_s = self.y - ATBAT_HT
+            line = Line((x_s, y_s), (x_e, self.y - ATBAT_HT / 2))
+            if self.flip:
+                line.translate(SEPARATION + 2 * (ORIGIN_X + ATBAT_W), 0)
+                line.scale(-1, 1)
+            atbat_group.add(line)
+            if not runner.out:
+                circ = Circle((x_e, self.y - ATBAT_HT / 2), 2)
+                if self.flip:
+                    circ.translate(SEPARATION + 2 * (ORIGIN_X + ATBAT_W), 0)
+                    circ.scale(-1, 1)
+                atbat_group.add(circ)
 
     def draw_runners(self, atbat, atbat_group):
         b_r = [r for r in atbat.runners if r.id == atbat.batter]
@@ -134,6 +153,11 @@ class Scorecard:
                 x_s = x + BASE_L * runner.start
                 x_e = x + BASE_L * runner.end
                 y_s = self.y - ATBAT_HT
+                mid_pa_runners = [r for r in atbat.mid_pa_runners
+                                  if not r.out and r.id == runner.id]
+                if mid_pa_runners:
+                    x_s = x + BASE_L * max([r.end for r in mid_pa_runners])
+                    y_s = self.y - ATBAT_HT / 2
                 line = Line((x_s, y_s), (x_e, self.y))
                 if self.flip:
                     line.translate(SEPARATION + 2 * (ORIGIN_X + ATBAT_W), 0)
