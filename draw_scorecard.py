@@ -30,6 +30,7 @@ class Scorecard:
 
         self.set_game_height()
         self.draw_team_boxes()
+        self.draw_inning_separators()
         self.draw_game()
 
         dwg.save()
@@ -59,6 +60,14 @@ class Scorecard:
         self.dwg.add(away_team)
         self.dwg.add(home_team)
 
+    def draw_inning_separators(self):
+        y = ORIGIN_Y
+        for inning in self.game.innings:
+            y += ATBAT_HT * max(len(inning.top), len(inning.bottom))
+            self.dwg.add(Line((ORIGIN_X, y), (ORIGIN_X + ATBAT_W, y)))
+            self.dwg.add(Line((ORIGIN_X + ATBAT_W + SEPARATION, y),
+                              (ORIGIN_X + 2 * ATBAT_W + SEPARATION, y)))
+
     def draw_game(self):
         self.y = ORIGIN_Y + ATBAT_HT
         for inning in self.game.innings:
@@ -82,11 +91,6 @@ class Scorecard:
             inning_end_y = max(inning_end_y, self.y)
             self.flip = True
         self.y = inning_end_y
-        self.dwg.add(Line((ORIGIN_X, self.y - ATBAT_HT),
-                          (ORIGIN_X + ATBAT_W, self.y - ATBAT_HT)))
-        self.dwg.add(Line((ORIGIN_X + ATBAT_W + SEPARATION, self.y - ATBAT_HT),
-                          (ORIGIN_X + 2 * ATBAT_W + SEPARATION,
-                           self.y - ATBAT_HT)))
 
     def draw_half_inning(self, half_inning):
         for atbat in half_inning:
