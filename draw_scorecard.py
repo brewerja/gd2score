@@ -1,6 +1,6 @@
 import copy
 
-import svgwrite
+from svgwrite import Drawing
 from svgwrite.shapes import Circle, Line, Rect
 from svgwrite.text import Text
 from svgwrite.container import Group
@@ -25,7 +25,7 @@ class Scorecard:
         self.game = game
         self.players = players
 
-        dwg = svgwrite.Drawing('test.svg', debug=True, profile='full')
+        dwg = Drawing('test.svg', debug=True, profile='full')
         dwg.add_stylesheet('style.css', 'styling')
         self.dwg = dwg
 
