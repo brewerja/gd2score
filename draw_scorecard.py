@@ -1,4 +1,5 @@
 import copy
+import logging
 
 from svgwrite import Drawing
 from svgwrite.shapes import Circle, Line, Rect
@@ -116,20 +117,30 @@ class Scorecard:
                     text_anchor='middle')
 
     def draw_mid_pa_runners(self, atbat, atbat_group):
+        runners_by_id = dict((runner.id, []) for runner
+                             in atbat.mid_pa_runners)
         for runner in atbat.mid_pa_runners:
-            x = ORIGIN_X + NAME_W + SCORE_W
-            x_s = x + BASE_L * runner.start
-            x_e = x + BASE_L * runner.end
-            y_s = self.y - ATBAT_HT
-            line = Line((x_s, y_s), (x_e, self.y - ATBAT_HT / 2))
-            if self.is_home_team_batting(atbat.inning):
-                self.flip(line)
-            atbat_group.add(line)
-            if not runner.out:
-                circ = Circle((x_e, self.y - ATBAT_HT / 2), 2)
+            runners_by_id[runner.id].append(runner)
+
+        for id in runners_by_id.keys():
+            for i, runner in enumerate(
+                    sorted(runners_by_id[id], key=lambda r: r.id)):
+                x = ORIGIN_X + NAME_W + SCORE_W
+                x_start = x + BASE_L * runner.start
+                x_end = x + BASE_L * runner.end
+                y_start = self.y - ATBAT_HT
+                y_end = self.y - ATBAT_HT / 2
+                if i != 0:
+                    y_start = y_end
+                line = Line((x_start, y_start), (x_end, self.y - ATBAT_HT / 2))
                 if self.is_home_team_batting(atbat.inning):
-                    self.flip(circ)
-                atbat_group.add(circ)
+                    self.flip(line)
+                atbat_group.add(line)
+                if not runner.out:
+                    circ = Circle((x_end, self.y - ATBAT_HT / 2), 2)
+                    if self.is_home_team_batting(atbat.inning):
+                        self.flip(circ)
+                    atbat_group.add(circ)
 
     def draw_runners(self, atbat, atbat_group):
         b_r = [r for r in atbat.runners if r.id == atbat.batter]
