@@ -39,8 +39,9 @@ class Scorecard:
         self.game_ht = sum([max(len(inning.top), len(inning.bottom))
                             for inning in self.game.innings]) * ATBAT_HT
 
-    def get_team_box(self):
+    def get_team_box(self, id):
         box = Group()
+        box['id'] = id
         box.add(Rect((ORIGIN_X, ORIGIN_Y), (ATBAT_W, self.game_ht)))
         box.add(Line((ORIGIN_X + NAME_W, ORIGIN_Y),
                      (ORIGIN_X + NAME_W, ORIGIN_Y + self.game_ht)))
@@ -49,13 +50,9 @@ class Scorecard:
         return box
 
     def draw_team_boxes(self):
-        away_team = self.get_team_box()
-        away_team['id'] = 'away_team'
-
-        home_team = self.get_team_box()
-        home_team['id'] = 'home_team'
-        home_team.translate(SEPARATION + 2 * (ORIGIN_X + ATBAT_W), 0)
-        home_team.scale(-1, 1)
+        away_team = self.get_team_box('away_team')
+        home_team = self.get_team_box('home_team')
+        self.flip(home_team)
 
         self.dwg.add(away_team)
         self.dwg.add(home_team)
