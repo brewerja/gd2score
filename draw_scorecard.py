@@ -91,6 +91,7 @@ class Scorecard:
     def draw_atbat(self, atbat):
         self.set_x_and_anchor(atbat.inning)
         atbat_group = Group()
+        atbat_group.set_desc(atbat.des)
         atbat_group.add(self.get_batter_name_text(atbat))
         atbat_group.add(self.get_scoring_text(atbat))
         self.draw_mid_pa_runners(atbat, atbat_group)
@@ -114,10 +115,15 @@ class Scorecard:
                     text_anchor=self.name_anchor)
 
     def get_scoring_text(self, atbat):
-        return Text(atbat.scoring.code,
+        text = Text(atbat.scoring.code,
                     x=[self.scoring_x], y=[self.y - TEXT_HOP],
                     class_=atbat.scoring.result,
                     text_anchor='middle')
+        if atbat.scoring.code == 'Kl':
+            text.text = 'K'
+            text.translate(2 * self.scoring_x, 0)
+            text.scale(-1, 1)
+        return text
 
     def draw_mid_pa_runners(self, atbat, atbat_group):
         runners_by_id = dict((runner.id, []) for runner
