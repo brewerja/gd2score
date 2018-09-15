@@ -6,6 +6,7 @@ from fuzzywuzzy import fuzz
 
 from scoring import get_scoring
 from models import Runner
+from parse_players import Player
 
 BASE_NUMBER = {
     '1st': 1,
@@ -30,6 +31,7 @@ class GameEnhancer:
         self.flat_atbats = sum([i.top + i.bottom for i in self.innings], [])
         self.actions = game.actions
         self.players = players
+        self.players[0] = Player(0, 'Held', 'Runner')
 
         self.fix_pinch_runners()
 
@@ -252,21 +254,22 @@ class GameEnhancer:
 
     def hold_runners(self, active_runners, atbat):
         """The schema only represents runner movement. We need a record in each
-        atbat even when the runners hold."""
-        mid_pa_safe_runner_ids = set(
-            [r.id for r in atbat.mid_pa_runners if not r.out])
-        runner_ids = set([r.id for r in atbat.runners])
+        atbat even when the runners hold. This algorithm doesn't worry about
+        who the runners are (pinch runners gum up the system) and so it creates
+        dummy runners."""
+        occupied_bases = [r.end for r in active_runners]
+        assert len(occupied_bases) == len(set(occupied_bases))
 
-        for runner in active_runners:
-            if (runner.id in mid_pa_safe_runner_ids and
-                    runner.id not in runner_ids):
-                end = self.get_mid_pa_end_base(atbat, runner.id)
-                atbat.runners.append(
-                    Runner(runner.id, end, end, atbat.event_num))
-            elif runner.id not in runner_ids:
-                end = self.get_runner_end_base_previous_pa(atbat, runner.id)
-                atbat.runners.append(
-                    Runner(runner.id, end, end, atbat.event_num))
+        for runner in atbat.mid_pa_runners:
+            assert runner.start in occupied_bases
+            occupied_bases.remove(runner.start)
+            if not runner.out and runner.end != 4:
+                occupied_bases.append(runner.end)
+        assert len(occupied_bases) == len(set(occupied_bases))
+
+        starting_bases = set([r.start for r in atbat.runners])
+        for base in set(occupied_bases).difference(starting_bases):
+            atbat.add_runner(Runner(0, base, base, atbat.event_num))
 
     def get_mid_pa_end_base(self, atbat, runner_id):
         return max([r.end for r in atbat.mid_pa_runners if r.id == runner_id])
