@@ -14,6 +14,7 @@ class GameParser:
 
         self.innings = []
         self.actions = {}
+        self.action_buffer = []
 
         self.parse_game(game_xml)
 
@@ -59,6 +60,10 @@ class GameParser:
                                   home_score=home_score,
                                   away_score=away_score)
 
+        for action in self.action_buffer:
+            self.active_atbat.add_action(action)
+        self.action_buffer = []
+
         self.active_inning.add_event(self.active_atbat)
 
         for child in atbat:
@@ -76,6 +81,7 @@ class GameParser:
         player_id = int(action.attrib['player'])
         a = Action(event_num, event, des, player_id)
         self.add_action(a)
+        self.action_buffer.append(a)
 
     def parse_runner(self, runner):
         id = int(runner.attrib['id'])

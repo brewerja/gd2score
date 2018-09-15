@@ -69,6 +69,7 @@ class AtBat:
         self.away_score = away_score
 
         self.scoring = scoring
+        self.actions = []
 
     def add_runner(self, runner):
         if runner.event_num < self.event_num:
@@ -77,3 +78,9 @@ class AtBat:
             self.runners.append(runner)
         else:
             raise Exception('Runner bad ordering')
+
+    def add_action(self, action):
+        self.actions.append(action)
+
+    def get_description(self):
+        return '\n'.join([a.des for a in self.actions] + [self.des])

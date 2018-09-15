@@ -12,7 +12,7 @@ NAME_W = 100
 TEXT_HOP = 5
 SCORE_W = 25
 BASE_L = (ATBAT_W - NAME_W - SCORE_W) / 4
-SEPARATION = 30
+SEPARATION = 120
 
 AWAY_NAME_X = ORIGIN_X + NAME_W - TEXT_HOP
 AWAY_SCORING_X = ORIGIN_X + NAME_W + SCORE_W / 2
@@ -91,7 +91,7 @@ class Scorecard:
     def draw_atbat(self, atbat):
         self.set_x_and_anchor(atbat.inning)
         atbat_group = Group()
-        atbat_group.set_desc(atbat.des)
+        atbat_group.set_desc(atbat.get_description())
         atbat_group.add(self.get_batter_name_text(atbat))
         atbat_group.add(self.get_scoring_text(atbat))
         self.draw_mid_pa_runners(atbat, atbat_group)
