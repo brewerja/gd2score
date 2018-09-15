@@ -16,6 +16,9 @@ class GameParser:
         self.actions = {}
         self.action_buffer = []
 
+        self.home_pitchers = []
+        self.away_pitchers = []
+
         self.parse_game(game_xml)
 
     def parse_game(self, xml):
@@ -59,6 +62,11 @@ class GameParser:
                                   self.inning, outs,
                                   home_score=home_score,
                                   away_score=away_score)
+        # Starting Pitchers
+        if pa_num == 1:
+            self.home_pitchers.append(int(atbat.attrib['pitcher']))
+        elif self.inning == 1.5 and not self.active_inning.bottom:
+            self.away_pitchers.append(int(atbat.attrib['pitcher']))
 
         for action in self.action_buffer:
             self.active_atbat.add_action(action)
@@ -79,9 +87,18 @@ class GameParser:
         event = action.attrib['event']
         des = re.sub('\s+', ' ', action.attrib['des']).strip()
         player_id = int(action.attrib['player'])
-        a = Action(event_num, event, des, player_id)
+        a = Action(event_num, event, des, player_id, self.inning)
+
+        if event == 'Pitching Substitution':
+            self.add_pitching_change(a)
         self.add_action(a)
         self.action_buffer.append(a)
+
+    def add_pitching_change(self, action):
+        if self.inning % 1.0:
+            self.away_pitchers.append(action.player)
+        else:
+            self.home_pitchers.append(action.player)
 
     def parse_runner(self, runner):
         id = int(runner.attrib['id'])

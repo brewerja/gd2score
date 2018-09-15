@@ -27,16 +27,20 @@ HITS_IN_PARK = ('Single', 'Double', 'Triple')
 
 class GameEnhancer:
     def __init__(self, game, players):
+        self.game = game
         self.innings = game.innings
         self.flat_atbats = sum([i.top + i.bottom for i in self.innings], [])
         self.actions = game.actions
         self.players = players
         self.players[0] = Player(0, 'Held', 'Runner')
 
+    def enhance(self):
         self.fix_pinch_runners()
 
         for inning in self.innings:
             self.fix_inning(inning)
+
+        return self.game
 
     def fix_pinch_runners(self):
         """When a pinch runner is inserted into the game, in addition to the

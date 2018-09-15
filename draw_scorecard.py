@@ -1,5 +1,4 @@
 import copy
-import logging
 
 from svgwrite import Drawing
 from svgwrite.shapes import Circle, Line, Rect
@@ -12,7 +11,7 @@ NAME_W = 100
 TEXT_HOP = 5
 SCORE_W = 25
 BASE_L = (ATBAT_W - NAME_W - SCORE_W) / 4
-SEPARATION = 120
+SEPARATION = 160
 
 AWAY_NAME_X = ORIGIN_X + NAME_W - TEXT_HOP
 AWAY_SCORING_X = ORIGIN_X + NAME_W + SCORE_W / 2
@@ -33,6 +32,7 @@ class Scorecard:
         self.draw_team_boxes()
         self.draw_inning_separators()
         self.draw_game()
+        self.draw_pitchers()
 
         self.dwg.save()
 
@@ -199,3 +199,60 @@ class Scorecard:
 
     def is_home_team_batting(self, inning):
         return inning % 1.0
+
+    def draw_pitchers(self):
+        self.away_hash_ys = []
+        self.home_hash_ys = []
+
+        self.y = ORIGIN_Y
+        self.draw_both_hashes()
+        for inning in self.game.innings:
+            inning_start = self.y
+            for half_inning in [inning.top, inning.bottom]:
+                for atbat in half_inning:
+                    for action in atbat.actions:
+                        if action.event == 'Pitching Substitution':
+                            self.draw_hash(atbat.inning)
+                    self.y += ATBAT_HT
+                self.y = inning_start
+            self.y = (inning_start + 
+                      ATBAT_HT * max(len(inning.top), len(inning.bottom)))
+        self.draw_both_hashes()
+        self.draw_pitcher_names(self.away_hash_ys, False)
+        self.draw_pitcher_names(self.home_hash_ys, True)
+
+    def draw_pitcher_names(self, y_array, flip):
+        away_pitchers = copy.copy(self.game.away_pitchers)
+        home_pitchers = copy.copy(self.game.home_pitchers)
+        for i, y in enumerate(y_array):
+            if i < len(y_array) - 1:
+                y_t = (y + y_array[i + 1]) / 2
+                if flip:
+                    x = ORIGIN_X + ATBAT_W + SEPARATION - 25
+                    pitcher_name = self.players[away_pitchers.pop(0)]
+                else:
+                    x = ORIGIN_X + ATBAT_W + 25
+                    pitcher_name = self.players[home_pitchers.pop(0)]
+                txt = Text(pitcher_name, x=[x], y=[y_t], text_anchor='middle',
+                           alignment_baseline='middle')
+                if flip:
+                    txt.rotate(-90, (x, y_t))
+                else:
+                    txt.rotate(90, (x, y_t))
+
+                self.dwg.add(txt)
+
+    def draw_hash(self, inning):
+        line = Line((ORIGIN_X + ATBAT_W + 20, self.y),
+                    (ORIGIN_X + ATBAT_W + 30, self.y))
+        if self.is_home_team_batting(inning):
+            self.flip(line)
+            self.home_hash_ys.append(self.y)
+        else:
+            self.away_hash_ys.append(self.y)
+        self.dwg.add(line)
+
+    def draw_both_hashes(self):
+        self.draw_hash(1.0)
+        self.draw_hash(1.5)
+

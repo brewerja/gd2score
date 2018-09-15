@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-Action = namedtuple('Action', 'event_num event des player')
+Action = namedtuple('Action', 'event_num event des player inning')
 
 
 class Runner:
