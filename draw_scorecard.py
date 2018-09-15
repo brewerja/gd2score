@@ -43,6 +43,7 @@ class Scorecard:
     def get_team_box(self, id):
         box = Group()
         box['id'] = id
+        box['class'] = 'team-box'
         box.add(Rect((ORIGIN_X, ORIGIN_Y), (ATBAT_W, self.game_ht)))
         box.add(Line((ORIGIN_X + NAME_W, ORIGIN_Y),
                      (ORIGIN_X + NAME_W, ORIGIN_Y + self.game_ht)))
@@ -62,9 +63,11 @@ class Scorecard:
         y = ORIGIN_Y
         for inning in self.game.innings:
             y += ATBAT_HT * max(len(inning.top), len(inning.bottom))
-            self.dwg.add(Line((ORIGIN_X, y), (ORIGIN_X + ATBAT_W, y)))
+            self.dwg.add(Line((ORIGIN_X, y), (ORIGIN_X + ATBAT_W, y),
+                              class_='team-box'))
             self.dwg.add(Line((ORIGIN_X + ATBAT_W + SEPARATION, y),
-                              (ORIGIN_X + 2 * ATBAT_W + SEPARATION, y)))
+                              (ORIGIN_X + 2 * ATBAT_W + SEPARATION, y),
+                              class_='team-box'))
 
     def draw_game(self):
         self.y = ORIGIN_Y + ATBAT_HT

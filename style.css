@@ -34,3 +34,7 @@ text.on-base {
 text.error {
     fill: orange;
 }
+
+.team-box {
+    stroke-width: 0.4;
+}
