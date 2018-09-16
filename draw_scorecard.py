@@ -222,25 +222,27 @@ class Scorecard:
         self.draw_pitcher_names(self.home_hash_ys, True)
 
     def draw_pitcher_names(self, y_array, flip):
-        away_pitchers = copy.copy(self.game.away_pitchers)
-        home_pitchers = copy.copy(self.game.home_pitchers)
         for i, y in enumerate(y_array):
-            if i < len(y_array) - 1:
-                y_t = (y + y_array[i + 1]) / 2
-                if flip:
-                    x = ORIGIN_X + ATBAT_W + SEPARATION - 25
-                    pitcher_name = self.players[away_pitchers.pop(0)]
-                else:
-                    x = ORIGIN_X + ATBAT_W + 25
-                    pitcher_name = self.players[home_pitchers.pop(0)]
-                txt = Text(pitcher_name, x=[x], y=[y_t], text_anchor='middle',
-                           alignment_baseline='middle')
-                if flip:
-                    txt.rotate(-90, (x, y_t))
-                else:
-                    txt.rotate(90, (x, y_t))
+            if i == len(y_array) - 1:
+                break
+            y_t = (y + y_array[i + 1]) / 2
+            if flip:
+                x = ORIGIN_X + ATBAT_W + SEPARATION - 25
+                pitcher_name = self.players[self.game.away_pitchers[i]]
+            else:
+                x = ORIGIN_X + ATBAT_W + 25
+                pitcher_name = self.players[self.game.home_pitchers[i]]
+            txt = Text(pitcher_name, x=[x], y=[y_t], text_anchor='middle',
+                       alignment_baseline='middle')
+            txt['class'] = 'pitcher-name'
+            if flip:
+                txt['id'] = 'away-pitcher-%02d' % i
+                txt.rotate(-90, (x, y_t))
+            else:
+                txt['id'] = 'home-pitcher-%02d' % i
+                txt.rotate(90, (x, y_t))
 
-                self.dwg.add(txt)
+            self.dwg.add(txt)
 
     def draw_hash(self, inning):
         line = Line((ORIGIN_X + ATBAT_W + 20, self.y),
@@ -248,8 +250,12 @@ class Scorecard:
         if self.is_home_team_batting(inning):
             self.flip(line)
             self.home_hash_ys.append(self.y)
+            index = len(self.home_hash_ys) - 1
+            line['id'] = 'home-pitcher-hash-%02d' % index
         else:
             self.away_hash_ys.append(self.y)
+            index = len(self.away_hash_ys) - 1
+            line['id'] = 'away-pitcher-hash-%02d' % index
         self.dwg.add(line)
 
     def draw_both_hashes(self):
