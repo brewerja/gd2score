@@ -314,14 +314,34 @@ class GameEnhancer:
 
     def highlight_runners_who_score(self):
         for inning in self.game.innings:
-            for half_inning in [reversed(inning.top), reversed(inning.bottom)]:
+            for half_inning in [inning.top, inning.bottom]:
                 bases_scored_from = []
-                for atbat in half_inning:
-                    for runner in atbat.runners + atbat.mid_pa_runners:
-                        if runner.end == 4 and not runner.out:
-                            runner.to_score = True
-                            bases_scored_from.append(runner.start)
+                for atbat in reversed(half_inning):
+                    bases_new = []
+                    # runners who eventually score (bases_scored_from prev ab)
+                    for runner in atbat.runners:
                         if runner.end in bases_scored_from and not runner.out:
                             runner.to_score = True
-                            bases_scored_from.remove(runner.end)
-                            bases_scored_from.append(runner.start)
+                            if runner.start != 0:
+                                bases_new.append(runner.start)
+
+                    # runners batted in "now"
+                    for runner in atbat.runners:
+                        if runner.end == 4 and not runner.out:
+                            runner.to_score = True
+                            if runner.start != 0:
+                                bases_new.append(runner.start)
+
+                    # mid-pa advances
+                    for runner in sorted(atbat.mid_pa_runners,
+                             key=lambda r: r.event_num, reverse=True):
+                        if runner.end in bases_new:
+                            runner.to_score = True
+                            bases_new.remove(runner.end)
+                            bases_new.append(runner.start)
+                        elif runner.end == 4 and not runner.out:
+                            runner.to_score = True
+                            if runner.start != 0:
+                                bases_new.append(runner.start)
+
+                    bases_scored_from = bases_new
