@@ -1,6 +1,7 @@
 import re
 from copy import deepcopy
 import logging
+from itertools import chain
 
 from fuzzywuzzy import fuzz
 
@@ -37,7 +38,8 @@ class GameEnhancer:
         self.fix_pinch_runners()
 
         for inning in self.game.innings:
-            self.fix_inning(inning)
+            self.fix_half_inning(inning.top)
+            self.fix_half_inning(inning.bottom)
 
         self.highlight_runners_who_score()
 
@@ -131,10 +133,6 @@ class GameEnhancer:
                 del runners[i]
         else:
             logging.debug('No runner swap')
-
-    def fix_inning(self, inning):
-        self.fix_half_inning(inning.top)
-        self.fix_half_inning(inning.bottom)
 
     def fix_half_inning(self, half_inning):
         """Adds a scoring string to each atbat, adds missing runner tags, and
@@ -313,35 +311,39 @@ class GameEnhancer:
                             (runner_last_name, des))
 
     def highlight_runners_who_score(self):
-        for inning in self.game.innings:
-            for half_inning in [inning.top, inning.bottom]:
-                bases_scored_from = []
-                for atbat in reversed(half_inning):
-                    bases_new = []
-                    # runners who eventually score (bases_scored_from prev ab)
-                    for runner in atbat.runners:
-                        if runner.end in bases_scored_from and not runner.out:
-                            runner.to_score = True
-                            if runner.start != 0:
-                                bases_new.append(runner.start)
+        half_innings = chain.from_iterable(
+            ((i.top, i.bottom) for i in self.game.innings))
+        highlighter = RunnerHighlighter()
 
-                    # runners batted in "now"
-                    for runner in atbat.runners:
-                        if runner.end == 4 and not runner.out:
-                            runner.to_score = True
-                            if runner.start != 0:
-                                bases_new.append(runner.start)
+        for half_inning in half_innings:
+            highlighter.highlight(half_inning)
 
-                    # mid-pa advances
-                    for runner in sorted(atbat.mid_pa_runners,
+
+class RunnerHighlighter:
+    def highlight(self, half_inning):
+        self.bases_scored_from = []
+        for atbat in reversed(half_inning):
+            self.bases_new = []
+            self.parse_atbat_ending_runners(atbat)
+            self.parse_mid_pa_runners(atbat)
+            self.bases_scored_from = self.bases_new
+
+    def parse_atbat_ending_runners(self, atbat):
+        for runner in atbat.runners:
+            if ((runner.end in self.bases_scored_from or
+                 runner.end == 4) and not runner.out):
+                self.mark_and_save(runner)
+
+    def parse_mid_pa_runners(self, atbat):
+        for runner in sorted(atbat.mid_pa_runners,
                              key=lambda r: r.event_num, reverse=True):
-                        if runner.end in bases_new:
-                            runner.to_score = True
-                            bases_new.remove(runner.end)
-                            bases_new.append(runner.start)
-                        elif runner.end == 4 and not runner.out:
-                            runner.to_score = True
-                            if runner.start != 0:
-                                bases_new.append(runner.start)
+            if runner.end in self.bases_new and not runner.out:
+                self.bases_new.remove(runner.end)
+                self.mark_and_save(runner)
+            elif runner.end == 4 and not runner.out:
+                self.mark_and_save(runner)
 
-                    bases_scored_from = bases_new
+    def mark_and_save(self, runner):
+        runner.to_score = True
+        if runner.start != 0:
+            self.bases_new.append(runner.start)
