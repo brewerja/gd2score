@@ -10,6 +10,7 @@ class Runner:
         self.end = end
         self.event_num = event_num
         self.out = out
+        self.to_score = False
 
     def __str__(self):
         return str(self.__dict__)

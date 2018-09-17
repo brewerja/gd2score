@@ -28,8 +28,7 @@ HITS_IN_PARK = ('Single', 'Double', 'Triple')
 class GameEnhancer:
     def __init__(self, game, players):
         self.game = game
-        self.innings = game.innings
-        self.flat_atbats = sum([i.top + i.bottom for i in self.innings], [])
+        self.flat_atbats = sum([i.top + i.bottom for i in game.innings], [])
         self.actions = game.actions
         self.players = players
         self.players[0] = Player(0, 'Held', 'Runner')
@@ -37,8 +36,10 @@ class GameEnhancer:
     def enhance(self):
         self.fix_pinch_runners()
 
-        for inning in self.innings:
+        for inning in self.game.innings:
             self.fix_inning(inning)
+
+        self.highlight_runners_who_score()
 
         return self.game
 
@@ -310,3 +311,17 @@ class GameEnhancer:
         if throw:
             raise Exception('Cannot find base where %s was put out:\n%s' %
                             (runner_last_name, des))
+
+    def highlight_runners_who_score(self):
+        for inning in self.game.innings:
+            for half_inning in [reversed(inning.top), reversed(inning.bottom)]:
+                bases_scored_from = []
+                for atbat in half_inning:
+                    for runner in atbat.runners + atbat.mid_pa_runners:
+                        if runner.end == 4 and not runner.out:
+                            runner.to_score = True
+                            bases_scored_from.append(runner.start)
+                        if runner.end in bases_scored_from and not runner.out:
+                            runner.to_score = True
+                            bases_scored_from.remove(runner.end)
+                            bases_scored_from.append(runner.start)

@@ -1,15 +1,21 @@
-circle {
+g.runner {
     stroke: gray;
     fill: gray;
 }
 
-line {
-    stroke: gray;
+g.to-score {
+    stroke: black;
+    fill: black;
+    stroke-width: 1.5;
 }
 
 rect {
-    stroke: gray;
     fill: none;
+}
+
+.team-box, .pitcher-hash {
+    stroke: gray;
+    stroke-width: 0.4;
 }
 
 text.batter-name {
@@ -35,6 +41,3 @@ text.error {
     fill: orange;
 }
 
-.team-box {
-    stroke-width: 0.4;
-}

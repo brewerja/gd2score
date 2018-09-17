@@ -148,8 +148,9 @@ class Scorecard:
                     self.flip(line_end)
                 if runner.out and x_end != x_start:
                     line_end.rotate(45, (x_end, y_end))
-                atbat_group.add(line)
-                atbat_group.add(line_end)
+                runner_group = self.group_runner(line, line_end,
+                                                 runner.to_score)
+                atbat_group.add(runner_group)
 
     def draw_runners(self, atbat, atbat_group):
         b_r = [r for r in atbat.runners if r.id == atbat.batter]
@@ -162,8 +163,6 @@ class Scorecard:
                 if self.is_home_team_batting(atbat.inning):
                     self.flip(line)
                     self.flip(line_end)
-                atbat_group.add(line)
-                atbat_group.add(line_end)
             else:
                 x = ORIGIN_X + NAME_W + SCORE_W
                 x_start = x + BASE_L * runner.start
@@ -181,8 +180,18 @@ class Scorecard:
                     self.flip(line_end)
                 if runner.out:
                     line_end.rotate(45, (x_end, self.y))
-                atbat_group.add(line)
-                atbat_group.add(line_end)
+            runner_group = self.group_runner(line, line_end, runner.to_score)
+            atbat_group.add(runner_group)
+
+    def group_runner(self, line, line_end, to_score):
+        runner_group = Group()
+        runner_group.add(line)
+        runner_group.add(line_end)
+        if to_score:
+            runner_group['class'] = 'runner to-score'
+        else:
+            runner_group['class'] = 'runner'
+        return runner_group
 
     def get_runner_end(self, x, y, is_out):
         if is_out:
@@ -227,10 +236,10 @@ class Scorecard:
                 break
             y_t = (y + y_array[i + 1]) / 2
             if flip:
-                x = ORIGIN_X + ATBAT_W + SEPARATION - 25
+                x = ORIGIN_X + ATBAT_W + SEPARATION - 24
                 pitcher_name = self.players[self.game.away_pitchers[i]]
             else:
-                x = ORIGIN_X + ATBAT_W + 25
+                x = ORIGIN_X + ATBAT_W + 24
                 pitcher_name = self.players[self.game.home_pitchers[i]]
             txt = Text(pitcher_name, x=[x], y=[y_t], text_anchor='middle',
                        alignment_baseline='middle')
@@ -256,6 +265,7 @@ class Scorecard:
             self.away_hash_ys.append(self.y)
             index = len(self.away_hash_ys) - 1
             line['id'] = 'away-pitcher-hash-%02d' % index
+        line['class'] = 'pitcher-hash'
         self.dwg.add(line)
 
     def draw_both_hashes(self):
