@@ -168,8 +168,9 @@ class Scorecard:
                 x_start = x + BASE_L * runner.start
                 x_end = x + BASE_L * runner.end
                 y_start = self.y - ATBAT_HT
+                # TODO: no longer using id, does this fully solve all cases?
                 mid_pa_runners = [r for r in atbat.mid_pa_runners
-                                  if not r.out and r.id == runner.id]
+                                  if not r.out and r.end == runner.start]
                 if mid_pa_runners:
                     x_start = x + BASE_L * max([r.end for r in mid_pa_runners])
                     y_start = self.y - ATBAT_HT / 2
