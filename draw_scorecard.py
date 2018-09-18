@@ -28,7 +28,6 @@ class Scorecard:
         self.dwg = Drawing(svg_filename, debug=True, profile='full')
         self.dwg.add_stylesheet('style.css', 'styling')
 
-        self.set_game_height()
         self.draw_team_boxes()
         self.draw_inning_separators()
         self.draw_game()
@@ -36,24 +35,26 @@ class Scorecard:
 
         self.dwg.save()
 
-    def set_game_height(self):
-        self.game_ht = sum([max(len(inning.top), len(inning.bottom))
-                            for inning in self.game.innings]) * ATBAT_HT
-
-    def get_team_box(self, id):
+    def get_team_box(self, id, ht):
         box = Group()
         box['id'] = id
         box['class'] = 'team-box'
-        box.add(Rect((ORIGIN_X, ORIGIN_Y), (ATBAT_W, self.game_ht)))
+        box.add(Rect((ORIGIN_X, ORIGIN_Y), (ATBAT_W, ht)))
         box.add(Line((ORIGIN_X + NAME_W, ORIGIN_Y),
-                     (ORIGIN_X + NAME_W, ORIGIN_Y + self.game_ht)))
+                     (ORIGIN_X + NAME_W, ORIGIN_Y + ht)))
         box.add(Line((ORIGIN_X + NAME_W + SCORE_W, ORIGIN_Y),
-                     (ORIGIN_X + NAME_W + SCORE_W, ORIGIN_Y + self.game_ht)))
+                     (ORIGIN_X + NAME_W + SCORE_W, ORIGIN_Y + ht)))
         return box
-
+    
     def draw_team_boxes(self):
-        away_team = self.get_team_box('away_team')
-        home_team = self.get_team_box('home_team')
+        away_ht = sum([max(len(inning.top), len(inning.bottom))
+                       for inning in self.game.innings]) * ATBAT_HT
+        away_team = self.get_team_box('away_team', away_ht)
+
+        home_ht = away_ht
+        if self.is_no_final_bottom():
+            home_ht = away_ht - len(self.game.innings[-1].top) * ATBAT_HT
+        home_team = self.get_team_box('home_team', home_ht)
         self.flip(home_team)
 
         self.dwg.add(away_team)
@@ -61,10 +62,13 @@ class Scorecard:
 
     def draw_inning_separators(self):
         y = ORIGIN_Y
-        for inning in self.game.innings:
+        for i, inning in enumerate(self.game.innings[:-1]):
             y += ATBAT_HT * max(len(inning.top), len(inning.bottom))
             self.dwg.add(Line((ORIGIN_X, y), (ORIGIN_X + ATBAT_W, y),
                               class_='team-box'))
+            if (i == len(self.game.innings) - 2 and
+                self.is_no_final_bottom()):
+                break
             self.dwg.add(Line((ORIGIN_X + ATBAT_W + SEPARATION, y),
                               (ORIGIN_X + 2 * ATBAT_W + SEPARATION, y),
                               class_='team-box'))
@@ -229,7 +233,7 @@ class Scorecard:
                       ATBAT_HT * max(len(inning.top), len(inning.bottom)))
 
         self.draw_hash(1.0)
-        if self.game.innings and not self.game.innings[-1].bottom:
+        if self.is_no_final_bottom():
             self.y = self.y - ATBAT_HT * len(inning.top)
         self.draw_hash(1.5)
 
@@ -278,3 +282,5 @@ class Scorecard:
         self.draw_hash(1.0)
         self.draw_hash(1.5)
 
+    def is_no_final_bottom(self):
+        return self.game.innings and not self.game.innings[-1].bottom
