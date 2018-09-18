@@ -227,7 +227,12 @@ class Scorecard:
                 self.y = inning_start
             self.y = (inning_start + 
                       ATBAT_HT * max(len(inning.top), len(inning.bottom)))
-        self.draw_both_hashes()
+
+        self.draw_hash(1.0)
+        if self.game.innings and not self.game.innings[-1].bottom:
+            self.y = self.y - ATBAT_HT * len(inning.top)
+        self.draw_hash(1.5)
+
         self.draw_pitcher_names(self.away_hash_ys, False)
         self.draw_pitcher_names(self.home_hash_ys, True)
 
