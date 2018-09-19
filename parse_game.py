@@ -16,6 +16,8 @@ class GameParser:
         self.actions = {}
         self.action_buffer = []
 
+        self.active_home_pitcher = None
+        self.active_away_pitcher = None
         self.home_pitchers = []
         self.away_pitchers = []
 
@@ -62,11 +64,8 @@ class GameParser:
                                   self.inning, outs,
                                   home_score=home_score,
                                   away_score=away_score)
-        # Starting Pitchers
-        if pa_num == 1:
-            self.home_pitchers.append(int(atbat.attrib['pitcher']))
-        elif self.inning == 1.5 and not self.active_inning.bottom:
-            self.away_pitchers.append(int(atbat.attrib['pitcher']))
+
+        self.check_for_pitching_change(int(atbat.attrib['pitcher']))
 
         for action in self.action_buffer:
             self.active_atbat.add_action(action)
@@ -89,16 +88,16 @@ class GameParser:
         player_id = int(action.attrib['player'])
         a = Action(event_num, event, des, player_id, self.inning)
 
-        if event == 'Pitching Substitution':
-            self.add_pitching_change(a)
         self.add_action(a)
         self.action_buffer.append(a)
 
-    def add_pitching_change(self, action):
-        if self.inning % 1.0:
-            self.away_pitchers.append(action.player)
-        else:
-            self.home_pitchers.append(action.player)
+    def check_for_pitching_change(self, pitcher_id):
+        if not self.inning % 1.0 and self.active_home_pitcher != pitcher_id:
+            self.home_pitchers.append(pitcher_id)
+            self.active_home_pitcher = pitcher_id
+        elif self.inning % 1.0 and self.active_away_pitcher != pitcher_id:
+            self.away_pitchers.append(pitcher_id)
+            self.active_away_pitcher = pitcher_id
 
     def parse_runner(self, runner):
         id = int(runner.attrib['id'])
