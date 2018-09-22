@@ -1,4 +1,5 @@
 import copy
+from itertools import groupby
 
 from svgwrite import Drawing
 from svgwrite.shapes import Circle, Line, Rect
@@ -45,7 +46,7 @@ class Scorecard:
         box.add(Line((ORIGIN_X + NAME_W + SCORE_W, ORIGIN_Y),
                      (ORIGIN_X + NAME_W + SCORE_W, ORIGIN_Y + ht)))
         return box
-    
+
     def draw_team_boxes(self):
         away_ht = sum([max(len(inning.top), len(inning.bottom))
                        for inning in self.game.innings]) * ATBAT_HT
@@ -67,7 +68,7 @@ class Scorecard:
             self.dwg.add(Line((ORIGIN_X, y), (ORIGIN_X + ATBAT_W, y),
                               class_='team-box'))
             if (i == len(self.game.innings) - 2 and
-                self.is_no_final_bottom()):
+                    self.is_no_final_bottom()):
                 break
             self.dwg.add(Line((ORIGIN_X + ATBAT_W + SEPARATION, y),
                               (ORIGIN_X + 2 * ATBAT_W + SEPARATION, y),
@@ -130,40 +131,42 @@ class Scorecard:
         return text
 
     def draw_mid_pa_runners(self, atbat, atbat_group):
-        runners_by_id = dict((runner.id, []) for runner
-                             in atbat.mid_pa_runners)
-        for runner in atbat.mid_pa_runners:
-            runners_by_id[runner.id].append(runner)
-
-        for id in runners_by_id.keys():
+        for id, group in groupby(atbat.mid_pa_runners, lambda r: r.id):
             for i, runner in enumerate(
-                    sorted(runners_by_id[id], key=lambda r: r.id)):
-                x = ORIGIN_X + NAME_W + SCORE_W
-                x_start = x + BASE_L * runner.start
-                x_end = x + BASE_L * runner.end
-                y_start = self.y - ATBAT_HT
-                y_end = self.y - ATBAT_HT / 2
-                if i != 0:
-                    y_start = y_end
-                line = Line((x_start, y_start), (x_end, y_end))
-                line_end = self.get_runner_end(x_end, y_end, runner.out)
-                if self.is_home_team_batting(atbat.inning):
-                    self.flip(line)
-                    self.flip(line_end)
-                if runner.out and x_end != x_start:
-                    line_end.rotate(45, (x_end, y_end))
-                runner_group = self.group_runner(line, line_end,
-                                                 runner.to_score)
+                    sorted(group, key=lambda r: r.event_num)):
+                runner_group = self.build_rgroup(runner, i, atbat.inning)
                 atbat_group.add(runner_group)
 
+    def build_rgroup(self, runner, r_index, inning):
+        line = self.get_rline(runner, r_index)
+        line_end = self.get_runner_end(line, runner.out)
+
+        if self.is_home_team_batting(inning):
+            self.flip(line)
+            self.flip(line_end)
+
+        if runner.out and not self.is_line_vertical(line):
+            line_end.rotate(45, self.get_line_end(line))
+
+        return self.group_runner(line, line_end, runner.to_score)
+
+    def get_rline(self, runner, r_index):
+        x = ORIGIN_X + NAME_W + SCORE_W
+        x_start = x + BASE_L * runner.start
+        x_end = x + BASE_L * runner.end
+        y_start = self.y - ATBAT_HT
+        y_end = self.y - ATBAT_HT / 2
+        if r_index != 0:
+            y_start = y_end
+        return Line((x_start, y_start), (x_end, y_end))
+
     def draw_runners(self, atbat, atbat_group):
-        b_r = [r for r in atbat.runners if r.id == atbat.batter]
         for runner in atbat.runners:
             if runner.id == atbat.batter:
                 x = ORIGIN_X + NAME_W
                 x_end = x + SCORE_W + BASE_L * runner.end
                 line = Line((x, self.y), (x_end, self.y))
-                line_end = self.get_runner_end(x_end, self.y, runner.out)
+                line_end = self.get_runner_end(line, runner.out)
                 if self.is_home_team_batting(atbat.inning):
                     self.flip(line)
                     self.flip(line_end)
@@ -179,12 +182,13 @@ class Scorecard:
                     x_start = x + BASE_L * max([r.end for r in mid_pa_runners])
                     y_start = self.y - ATBAT_HT / 2
                 line = Line((x_start, y_start), (x_end, self.y))
-                line_end = self.get_runner_end(x_end, self.y, runner.out)
+                line_end = self.get_runner_end(line, runner.out)
                 if self.is_home_team_batting(atbat.inning):
                     self.flip(line)
                     self.flip(line_end)
                 if runner.out:
                     line_end.rotate(45, (x_end, self.y))
+
             runner_group = self.group_runner(line, line_end, runner.to_score)
             atbat_group.add(runner_group)
 
@@ -198,7 +202,8 @@ class Scorecard:
             runner_group['class'] = 'runner'
         return runner_group
 
-    def get_runner_end(self, x, y, is_out):
+    def get_runner_end(self, line, is_out):
+        x, y = self.get_line_end(line)
         if is_out:
             g = Group()
             g.add(Line((x - 3, y - 3), (x + 3, y + 3)))
@@ -206,6 +211,12 @@ class Scorecard:
             return g
         else:
             return Circle((x, y), 2)
+
+    def is_line_vertical(self, line):
+        return line.attribs['x1'] == line.attribs['x2']
+
+    def get_line_end(self, line):
+        return line.attribs['x2'], line.attribs['y2']
 
     def flip(self, graphic):
         graphic.translate(SEPARATION + 2 * (ORIGIN_X + ATBAT_W), 0)
@@ -229,7 +240,7 @@ class Scorecard:
                             self.draw_hash(atbat.inning)
                     self.y += ATBAT_HT
                 self.y = inning_start
-            self.y = (inning_start + 
+            self.y = (inning_start +
                       ATBAT_HT * max(len(inning.top), len(inning.bottom)))
 
         self.draw_hash(1.0)
