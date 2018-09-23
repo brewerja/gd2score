@@ -84,4 +84,4 @@ class AtBat:
         self.actions.append(action)
 
     def get_description(self):
-        return '\n'.join([a.des for a in self.actions] + [self.des])
+        return '\n'.join(set([a.des for a in self.actions] + [self.des]))
