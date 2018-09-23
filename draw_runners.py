@@ -65,6 +65,8 @@ class DrawRunners:
     def finalize_runner_line(self, line, runner):
         """(1) Draw end, (2) flip if necessary, (3) rotate end if necessary,
         (4) group together the line and the end, (5) add to_score flag."""
+        if runner.out:
+            self.shorten_line(line)
         line_end = self.get_runner_end(line, runner.out)
         if self.is_home_team_batting:
             self.flip(line)
@@ -72,6 +74,19 @@ class DrawRunners:
         if runner.out:
             self.rotate_line_end(line_end, line)
         return self.group_runner(line, line_end, runner.to_score)
+
+    def shorten_line(self, line):
+        if not self.is_line_vertical(line):
+            x, y = self.get_line_start(line)
+            length = self.get_line_length(line) - 10
+            degrees = self.get_line_angle(line)
+            new_x = x + length * math.cos(math.radians(degrees))
+            new_y = y + length * math.sin(math.radians(degrees))
+        else:
+            x, y = self.get_line_end(line)
+            new_x = x
+            new_y = self.get_line_end(line)[1] - 10
+        line.attribs['x2'], line.attribs['y2'] = new_x, new_y
 
     def rotate_line_end(self, line_end, line):
         if not self.is_line_vertical(line):
@@ -111,6 +126,11 @@ class DrawRunners:
 
     def get_line_end(self, line):
         return line.attribs['x2'], line.attribs['y2']
+
+    def get_line_length(self, line):
+        x_start, y_start = self.get_line_start(line)
+        x_end, y_end = self.get_line_end(line)
+        return math.hypot(x_end - x_start, y_end - y_start)
 
     def flip(self, graphic):
         graphic.translate(SEPARATION + 2 * (ORIGIN_X + ATBAT_W), 0)
