@@ -39,6 +39,8 @@ class GameParser:
         if half_inning.tag == 'bottom':
             self.inning += 0.5
 
+        if len(half_inning) == 0:
+            raise IncompleteGameException()
         for event in half_inning:
             self.parse_event(event)
 
@@ -122,3 +124,7 @@ class GameParser:
             self.actions[action.event_num] = action
         else:
             raise Exception('Duplicate action: %d' % action.event_num)
+
+
+class IncompleteGameException(Exception):
+    pass
