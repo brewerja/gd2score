@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 
 from parse_game import GameParser
 from parse_players import PlayersParser
-from draw_scorecard import Scorecard
+from draw_scorecard import DrawScorecard
 from enhance import GameEnhancer
 from pinch_runners import PinchRunnerFixer
 
@@ -50,8 +50,8 @@ if __name__ == '__main__':
                         format='%(levelname)s:%(message)s',
                         level=logging.DEBUG)
 
-    #start_date = datetime(2017, 7, 25)
-    start_date = datetime(2018, 9, 17)
+    start_date = datetime(2017, 7, 25)
+    #start_date = datetime(2018, 9, 21)
     for date in [start_date + timedelta(days=x) for x in range(0, 200)]:
         game_ids = list_game_ids(date.year, date.month, date.day)
         for game_id in game_ids:
@@ -68,7 +68,7 @@ if __name__ == '__main__':
                 game = GameParser(get(game_url + 'inning/inning_all.xml'))
                 game = PinchRunnerFixer(game, players).fix()
                 game = GameEnhancer(game, players).enhance()
-                Scorecard(game, players, 'test.svg')
+                DrawScorecard(game, players, 'test.svg')
                 input()
                 #if game_id in ['gid_2017_07_25_anamlb_clemlb_1']:
                     #break
