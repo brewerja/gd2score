@@ -86,7 +86,7 @@ class GameEnhancer:
                 self.players[atbat.batter].last, atbat.des)
             atbat.add_runner(
                 Runner(atbat.batter, 0, base, atbat.event_num, out=True))
-            logging.warning('Runner inserted: batter is out at %d' % base)
+            logging.debug('Runner inserted: batter is out at %d' % base)
 
     def resolve_runners_3outs(self, atbat, outs_on_play):
         """When the inning ends, the absences of a runner tag for the batter
@@ -103,7 +103,7 @@ class GameEnhancer:
             atbat.add_runner(
                 Runner(atbat.batter, 0, batter_out_base, atbat.event_num,
                        out=True))
-            logging.warning('Runner inserted: batter is out at %d',
+            logging.debug('Runner inserted: batter is out at %d',
                             batter_out_base)
 
         runner_outs = sum([1 for r in atbat.runners if r.out])
@@ -116,10 +116,10 @@ class GameEnhancer:
                 base = HITS_IN_PARK.index(atbat.event) + 1
                 atbat.add_runner(
                     Runner(atbat.batter, 0, base, atbat.event_num))
-                logging.warning('Runner inserted: batter to %d', base)
+                logging.debug('Runner inserted: batter to %d', base)
             elif not batter_out_base and atbat.event != 'Runner Out':
                 atbat.add_runner(Runner(atbat.batter, 0, 1, atbat.event_num))
-                logging.warning('Runner inserted: batter to 1st')
+                logging.debug('Runner inserted: batter to 1st')
 
         self.strand_remaining_runners(atbat)
 
