@@ -18,7 +18,8 @@ class DrawScorecard:
         self.draw_team_boxes()
         self.draw_inning_separators()
         self.draw_game()
-        self.draw_pitchers()
+        self.draw_pitcher_hash_marks()
+        self.draw_pitcher_names()
 
         self.dwg.save()
 
@@ -115,14 +116,13 @@ class DrawScorecard:
             text.scale(-1, 1)
         return text
 
-    def draw_pitchers(self):
+    def draw_pitcher_hash_marks(self):
         self.away_hash_ys = []
         self.home_hash_ys = []
 
-        self.active_home_pitcher = self.game.innings[0].top[0].pitcher
-        self.active_away_pitcher = self.game.innings[0].bottom[0].pitcher
-        self.home_pitchers = [self.active_home_pitcher]
-        self.away_pitchers = [self.active_away_pitcher]
+        # Starting pitchers
+        self.home_pitchers = [self.game.innings[0].top[0].pitcher]
+        self.away_pitchers = [self.game.innings[0].bottom[0].pitcher]
 
         self.y = ORIGIN_Y
         self.draw_both_hashes()
@@ -130,8 +130,8 @@ class DrawScorecard:
             inning_start = self.y
             for half_inning in [inning.top, inning.bottom]:
                 for atbat in half_inning:
-                    if (atbat.pitcher != self.active_home_pitcher and
-                            atbat.pitcher != self.active_away_pitcher):
+                    if (atbat.pitcher != self.home_pitchers[-1] and
+                            atbat.pitcher != self.away_pitchers[-1]):
                         self.draw_hash(atbat.inning)
                         self.swap_pitcher(atbat)
                     self.y += ATBAT_HT
@@ -144,21 +144,40 @@ class DrawScorecard:
             self.y = self.y - ATBAT_HT * len(inning.top)
         self.draw_hash(1.5)
 
-        self.draw_pitcher_names(self.away_hash_ys, False)
-        self.draw_pitcher_names(self.home_hash_ys, True)
+    def draw_both_hashes(self):
+        self.draw_hash(1.0)
+        self.draw_hash(1.5)
+
+    def draw_hash(self, inning):
+        line = Line((ORIGIN_X + ATBAT_W + 20, self.y),
+                    (ORIGIN_X + ATBAT_W + 30, self.y))
+        if self.is_home_team_batting(inning):
+            self.flip(line)
+            self.home_hash_ys.append(self.y)
+            index = len(self.home_hash_ys) - 1
+            line['id'] = 'home-pitcher-hash-%02d' % index
+        else:
+            self.away_hash_ys.append(self.y)
+            index = len(self.away_hash_ys) - 1
+            line['id'] = 'away-pitcher-hash-%02d' % index
+        line['class'] = 'pitcher-hash'
+        self.dwg.add(line)
 
     def swap_pitcher(self, atbat):
         if self.is_home_team_batting(atbat.inning):
-            self.active_away_pitcher = atbat.pitcher
             self.away_pitchers.append(atbat.pitcher)
         else:
-            self.active_home_pitcher = atbat.pitcher
             self.home_pitchers.append(atbat.pitcher)
 
-    def draw_pitcher_names(self, y_array, flip):
-        for i, y in enumerate(y_array):
-            if i == len(y_array) - 1:
-                break
+    def is_no_final_bottom(self):
+        return self.game.innings and not self.game.innings[-1].bottom
+
+    def draw_pitcher_names(self):
+        self._draw_pitcher_names(self.away_hash_ys, False)
+        self._draw_pitcher_names(self.home_hash_ys, True)
+
+    def _draw_pitcher_names(self, y_array, flip):
+        for i, y in enumerate(y_array[:-1]):
             y_t = (y + y_array[i + 1]) / 2
             if flip:
                 x = ORIGIN_X + ATBAT_W + SEPARATION - 24
@@ -177,28 +196,6 @@ class DrawScorecard:
                 txt.rotate(90, (x, y_t))
 
             self.dwg.add(txt)
-
-    def draw_hash(self, inning):
-        line = Line((ORIGIN_X + ATBAT_W + 20, self.y),
-                    (ORIGIN_X + ATBAT_W + 30, self.y))
-        if self.is_home_team_batting(inning):
-            self.flip(line)
-            self.home_hash_ys.append(self.y)
-            index = len(self.home_hash_ys) - 1
-            line['id'] = 'home-pitcher-hash-%02d' % index
-        else:
-            self.away_hash_ys.append(self.y)
-            index = len(self.away_hash_ys) - 1
-            line['id'] = 'away-pitcher-hash-%02d' % index
-        line['class'] = 'pitcher-hash'
-        self.dwg.add(line)
-
-    def draw_both_hashes(self):
-        self.draw_hash(1.0)
-        self.draw_hash(1.5)
-
-    def is_no_final_bottom(self):
-        return self.game.innings and not self.game.innings[-1].bottom
 
     def flip(self, graphic):
         graphic.translate(SEPARATION + 2 * (ORIGIN_X + ATBAT_W), 0)
