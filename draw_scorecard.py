@@ -119,15 +119,21 @@ class DrawScorecard:
         self.away_hash_ys = []
         self.home_hash_ys = []
 
+        self.active_home_pitcher = self.game.innings[0].top[0].pitcher
+        self.active_away_pitcher = self.game.innings[0].bottom[0].pitcher
+        self.home_pitchers = [self.active_home_pitcher]
+        self.away_pitchers = [self.active_away_pitcher]
+
         self.y = ORIGIN_Y
         self.draw_both_hashes()
         for inning in self.game.innings:
             inning_start = self.y
             for half_inning in [inning.top, inning.bottom]:
                 for atbat in half_inning:
-                    for action in atbat.actions:
-                        if action.event == 'Pitching Substitution':
-                            self.draw_hash(atbat.inning)
+                    if (atbat.pitcher != self.active_home_pitcher and
+                            atbat.pitcher != self.active_away_pitcher):
+                        self.draw_hash(atbat.inning)
+                        self.swap_pitcher(atbat)
                     self.y += ATBAT_HT
                 self.y = inning_start
             self.y = (inning_start +
@@ -141,6 +147,14 @@ class DrawScorecard:
         self.draw_pitcher_names(self.away_hash_ys, False)
         self.draw_pitcher_names(self.home_hash_ys, True)
 
+    def swap_pitcher(self, atbat):
+        if self.is_home_team_batting(atbat.inning):
+            self.active_away_pitcher = atbat.pitcher
+            self.away_pitchers.append(atbat.pitcher)
+        else:
+            self.active_home_pitcher = atbat.pitcher
+            self.home_pitchers.append(atbat.pitcher)
+
     def draw_pitcher_names(self, y_array, flip):
         for i, y in enumerate(y_array):
             if i == len(y_array) - 1:
@@ -148,10 +162,10 @@ class DrawScorecard:
             y_t = (y + y_array[i + 1]) / 2
             if flip:
                 x = ORIGIN_X + ATBAT_W + SEPARATION - 24
-                pitcher_name = self.players[self.game.away_pitchers[i]]
+                pitcher_name = self.players[self.away_pitchers[i]]
             else:
                 x = ORIGIN_X + ATBAT_W + 24
-                pitcher_name = self.players[self.game.home_pitchers[i]]
+                pitcher_name = self.players[self.home_pitchers[i]]
             txt = Text(pitcher_name, x=[x], y=[y_t], text_anchor='middle',
                        alignment_baseline='middle')
             txt['class'] = 'pitcher-name'

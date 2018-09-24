@@ -16,11 +16,6 @@ class GameParser:
         self.actions = {}
         self.action_buffer = []
 
-        self.active_home_pitcher = None
-        self.active_away_pitcher = None
-        self.home_pitchers = []
-        self.away_pitchers = []
-
         self.parse_game(game_xml)
 
     def parse_game(self, xml):
@@ -61,13 +56,12 @@ class GameParser:
         outs = int(atbat.attrib['o'])
         home_score = int(atbat.attrib['home_team_runs'])
         away_score = int(atbat.attrib['away_team_runs'])
+        pitcher = int(atbat.attrib['pitcher'])
 
         self.active_atbat = AtBat(pa_num, event_num, batter, des, event,
-                                  self.inning, outs,
+                                  pitcher, self.inning, outs,
                                   home_score=home_score,
                                   away_score=away_score)
-
-        self.check_for_pitching_change(int(atbat.attrib['pitcher']))
 
         for action in self.action_buffer:
             self.active_atbat.add_action(action)
@@ -92,14 +86,6 @@ class GameParser:
 
         self.add_action(a)
         self.action_buffer.append(a)
-
-    def check_for_pitching_change(self, pitcher_id):
-        if not self.inning % 1.0 and self.active_home_pitcher != pitcher_id:
-            self.home_pitchers.append(pitcher_id)
-            self.active_home_pitcher = pitcher_id
-        elif self.inning % 1.0 and self.active_away_pitcher != pitcher_id:
-            self.away_pitchers.append(pitcher_id)
-            self.active_away_pitcher = pitcher_id
 
     def parse_runner(self, runner):
         id = int(runner.attrib['id'])

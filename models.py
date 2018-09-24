@@ -43,7 +43,7 @@ class Inning:
 
 
 class AtBat:
-    def __init__(self, pa_num, event_num, batter, des, event,
+    def __init__(self, pa_num, event_num, batter, des, event, pitcher,
                  inning=1.0, outs=0, home_score=0, away_score=0,
                  mid_pa_runners=None, runners=None, scoring=None):
 
@@ -52,6 +52,7 @@ class AtBat:
         self.batter = batter
         self.des = des
         self.event = event
+        self.pitcher = pitcher
 
         self.inning = inning
         self.outs = outs
