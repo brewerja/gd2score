@@ -43,7 +43,7 @@ class DrawScorecard:
         if self.is_no_final_bottom():
             home_ht = away_ht - len(self.game.innings[-1].top) * ATBAT_HT
         home_team = self.get_team_box('home_team', home_ht)
-        self.flip(home_team)
+        flip(home_team)
 
         self.dwg.add(away_team)
         self.dwg.add(home_team)
@@ -152,7 +152,7 @@ class DrawScorecard:
         line = Line((ORIGIN_X + ATBAT_W + 20, self.y),
                     (ORIGIN_X + ATBAT_W + 30, self.y))
         if self.is_home_team_batting(inning):
-            self.flip(line)
+            flip(line)
             self.home_hash_ys.append(self.y)
             index = len(self.home_hash_ys) - 1
             line['id'] = 'home-pitcher-hash-%02d' % index
@@ -196,10 +196,6 @@ class DrawScorecard:
                 txt.rotate(90, (x, y_t))
 
             self.dwg.add(txt)
-
-    def flip(self, graphic):
-        graphic.translate(SEPARATION + 2 * (ORIGIN_X + ATBAT_W), 0)
-        graphic.scale(-1, 1)
 
     def is_home_team_batting(self, inning):
         return inning % 1.0

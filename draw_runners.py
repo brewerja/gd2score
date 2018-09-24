@@ -69,8 +69,8 @@ class DrawRunners:
             self.shorten_line(line)
         line_end = self.get_runner_end(line, runner.out)
         if self.is_home_team_batting:
-            self.flip(line)
-            self.flip(line_end)
+            flip(line)
+            flip(line_end)
         if runner.out:
             self.rotate_line_end(line_end, line)
         return self.group_runner(line, line_end, runner.to_score)
@@ -131,7 +131,3 @@ class DrawRunners:
         x_start, y_start = self.get_line_start(line)
         x_end, y_end = self.get_line_end(line)
         return math.hypot(x_end - x_start, y_end - y_start)
-
-    def flip(self, graphic):
-        graphic.translate(SEPARATION + 2 * (ORIGIN_X + ATBAT_W), 0)
-        graphic.scale(-1, 1)
