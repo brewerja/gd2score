@@ -104,7 +104,7 @@ class GameEnhancer:
                 Runner(atbat.batter, 0, batter_out_base, atbat.event_num,
                        out=True))
             logging.debug('Runner inserted: batter is out at %d',
-                            batter_out_base)
+                          batter_out_base)
 
         runner_outs = sum([1 for r in atbat.runners if r.out])
         if outs_on_play - runner_outs > 0:

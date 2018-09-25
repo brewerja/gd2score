@@ -2,6 +2,7 @@ from itertools import groupby
 from svgwrite.shapes import Circle, Line
 from svgwrite.container import Group
 import math
+import logging
 
 from constants import *
 
@@ -9,42 +10,42 @@ from constants import *
 class DrawRunners:
     def __init__(self, y, atbat, atbat_group):
         self.y = y
+        self.atbat = atbat
         self.atbat_group = atbat_group
         self.is_home_team_batting = atbat.inning % 1.0
 
-        self.draw_mid_pa_runners(atbat.mid_pa_runners)
-        self.draw_atbat_result_runners(atbat)
+    def draw(self):
+        self.draw_mid_pa_runners()
+        self.draw_atbat_result_runners()
 
-    def draw_mid_pa_runners(self, mid_pa_runners):
-        """Draw each runner's complete set of movements in event_num order."""
-        for id, group in groupby(mid_pa_runners, lambda r: r.id):
-            for i, runner in enumerate(
-                    sorted(group, key=lambda r: r.event_num)):
-                line = self.get_mid_pa_runner_line(runner, i == 0)
+    def draw_mid_pa_runners(self):
+        num_events = len(self.get_mid_pa_event_num_set())
+        for i, (event_num, group) in enumerate(
+                groupby(self.atbat.mid_pa_runners, lambda r: r.event_num)):
+            for runner in sorted(list(group), key=lambda r: r.end):
+                line = self.get_mid_pa_runner_line(runner, i, num_events)
                 runner_group = self.finalize_runner_line(line, runner)
                 self.atbat_group.add(runner_group)
 
-    def draw_atbat_result_runners(self, atbat):
-        for runner in atbat.runners:
-            if runner.id == atbat.batter:
+    def get_mid_pa_event_num_set(self):
+        return set([r.event_num for r in self.atbat.mid_pa_runners])
+
+    def draw_atbat_result_runners(self):
+        for runner in self.atbat.runners:
+            if runner.id == self.atbat.batter:
                 line = self.get_batter_runner_line(runner)
             else:
-                # TODO: no longer using id, does this fully solve all cases?
-                # TODO: is this ever more than one in number?
-                mid_pa_runners = [r for r in atbat.mid_pa_runners
-                                  if not r.out and r.end == runner.start]
-                line = self.get_baserunner_line(runner, mid_pa_runners)
+                line = self.get_baserunner_line(runner)
             runner_group = self.finalize_runner_line(line, runner)
             self.atbat_group.add(runner_group)
 
-    def get_mid_pa_runner_line(self, runner, is_first_advance_during_pa):
+    def get_mid_pa_runner_line(self, runner, i, num_events):
         x = ORIGIN_X + NAME_W + SCORE_W
         x_start = x + BASE_L * runner.start
         x_end = x + BASE_L * runner.end
-        y_start = self.y - ATBAT_HT
-        y_end = self.y - ATBAT_HT / 2
-        if not is_first_advance_during_pa:
-            y_start = y_end
+        y_step = ATBAT_HT / 2 / num_events
+        y_start = self.y - ATBAT_HT + i * y_step
+        y_end = y_start + y_step
         return Line((x_start, y_start), (x_end, y_end))
 
     def get_batter_runner_line(self, runner):
@@ -52,15 +53,26 @@ class DrawRunners:
         x_end = x_start + SCORE_W + BASE_L * runner.end
         return Line((x_start, self.y), (x_end, self.y))
 
-    def get_baserunner_line(self, runner, mid_pa_runners):
+    def get_baserunner_line(self, runner):
         x = ORIGIN_X + NAME_W + SCORE_W
         x_start = x + BASE_L * runner.start
         x_end = x + BASE_L * runner.end
         y_start = self.y - ATBAT_HT
-        if mid_pa_runners:
-            x_start = x + BASE_L * max([r.end for r in mid_pa_runners])
+        mid_pa_runner = self.get_mid_pa_runner_to_use(runner.start)
+        if mid_pa_runner:
+            x_start = x + BASE_L * mid_pa_runner.end
             y_start = self.y - ATBAT_HT / 2
         return Line((x_start, y_start), (x_end, self.y))
+
+    def get_mid_pa_runner_to_use(self, mid_pa_runner_end):
+        if self.atbat.mid_pa_runners:
+            last_event_num = max(self.get_mid_pa_event_num_set())
+            mid_pa_runners = [r for r in self.atbat.mid_pa_runners
+                              if not r.out and r.end == mid_pa_runner_end and
+                              r.event_num == last_event_num]
+            assert(len(mid_pa_runners) in (0, 1))
+            if mid_pa_runners:
+                return mid_pa_runners[0]
 
     def finalize_runner_line(self, line, runner):
         """(1) Draw end, (2) flip if necessary, (3) rotate end if necessary,
@@ -78,14 +90,14 @@ class DrawRunners:
     def shorten_line(self, line):
         if not self.is_line_vertical(line):
             x, y = self.get_line_start(line)
-            length = self.get_line_length(line) - 10
+            length = self.get_line_length(line) - OUT_SHORTEN
             degrees = self.get_line_angle(line)
             new_x = x + length * math.cos(math.radians(degrees))
             new_y = y + length * math.sin(math.radians(degrees))
         else:
             x, y = self.get_line_end(line)
             new_x = x
-            new_y = self.get_line_end(line)[1] - 10
+            new_y = self.get_line_end(line)[1] - OUT_SHORTEN
         line.attribs['x2'], line.attribs['y2'] = new_x, new_y
 
     def rotate_line_end(self, line_end, line):
@@ -102,11 +114,11 @@ class DrawRunners:
         x, y = self.get_line_end(line)
         if is_out:
             g = Group()
-            g.add(Line((x - 3, y - 3), (x + 3, y + 3)))
-            g.add(Line((x - 3, y + 3), (x + 3, y - 3)))
+            g.add(Line((x - X_SIZE, y - X_SIZE), (x + X_SIZE, y + X_SIZE)))
+            g.add(Line((x - X_SIZE, y + X_SIZE), (x + X_SIZE, y - X_SIZE)))
             return g
         else:
-            return Circle((x, y), 2)
+            return Circle((x, y), CIRCLE_R)
 
     def group_runner(self, line, line_end, to_score):
         runner_group = Group()

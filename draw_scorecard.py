@@ -86,7 +86,7 @@ class DrawScorecard:
         atbat_group.set_desc(atbat.get_description())
         atbat_group.add(self.get_batter_name_text(atbat))
         atbat_group.add(self.get_scoring_text(atbat))
-        DrawRunners(self.y, atbat, atbat_group)
+        DrawRunners(self.y, atbat, atbat_group).draw()
         self.dwg.add(atbat_group)
 
     def set_x_and_anchor(self, inning):
