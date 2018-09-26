@@ -2,9 +2,9 @@ from itertools import groupby
 from svgwrite.shapes import Circle, Line
 from svgwrite.container import Group
 import math
-import logging
 
-from constants import *
+from constants import (ORIGIN_X, ATBAT_HT, NAME_W, SCORE_W, BASE_L, CIRCLE_R,
+                       X_SIZE, OUT_SHORTEN, flip)
 
 
 class DrawRunners:

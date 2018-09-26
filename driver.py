@@ -1,12 +1,10 @@
-import shutil
-import tempfile
 import urllib.request
 from datetime import datetime, timedelta
 import logging
 
 from bs4 import BeautifulSoup
 
-from parse_game import GameParser
+from parse_game import GameParser, IncompleteGameException
 from parse_players import PlayersParser
 from draw_scorecard import DrawScorecard
 from enhance import GameEnhancer
@@ -40,18 +38,11 @@ def get_todays_game_ids():
 
 
 if __name__ == '__main__':
-#    with open('players.xml') as f:
-#        players = PlayersParser(f.read()).players
-#    with open('inning_all.xml') as f:
-#        game = GameParser(f.read())
-#    draw(game, players)
-
     logging.basicConfig(#filename='parsing.log',
                         format='%(levelname)s:%(message)s',
-                        level=logging.DEBUG)
+                        level=logging.INFO)
 
-    start_date = datetime(2017, 7, 25)
-    #start_date = datetime(2018, 9, 21)
+    start_date = datetime(2018, 3, 29)
     for date in [start_date + timedelta(days=x) for x in range(0, 200)]:
         game_ids = list_game_ids(date.year, date.month, date.day)
         for game_id in game_ids:
@@ -59,19 +50,17 @@ if __name__ == '__main__':
                            'gid_2014_05_23_arimlb_nynmlb_1',
                            'gid_2014_08_12_arimlb_clemlb_1']:
                 continue
-            #elif game_id not in ['gid_2017_07_25_anamlb_clemlb_1']:
-                #continue
             try:
                 logging.info(game_id)
                 game_url = get_game_url(game_id)
                 players = PlayersParser(get(game_url + 'players.xml')).players
-                game = GameParser(get(game_url + 'inning/inning_all.xml'))
-                game = PinchRunnerFixer(game, players).fix()
-                game = GameEnhancer(game, players).enhance()
-                DrawScorecard(game, players, 'test.svg')
-                input()
-                #if game_id in ['gid_2017_07_25_anamlb_clemlb_1']:
-                    #break
+                try:
+                    game = GameParser(get(game_url + 'inning/inning_all.xml'))
+                    game = PinchRunnerFixer(game, players).fix()
+                    game = GameEnhancer(game, players).enhance()
+                    DrawScorecard(game, players, 'test.svg')
+                except IncompleteGameException:
+                    pass
+                #input(game_url)
             except urllib.error.HTTPError:
                 print(game_id, '404')
-        break
