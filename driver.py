@@ -56,8 +56,8 @@ if __name__ == '__main__':
                 players = PlayersParser(get(game_url + 'players.xml')).players
                 try:
                     game = GameParser(get(game_url + 'inning/inning_all.xml'))
-                    game = PinchRunnerFixer(game, players).fix()
-                    game = GameEnhancer(game, players).enhance()
+                    PinchRunnerFixer(game, players).fix()
+                    GameEnhancer(game, players).enhance()
                     DrawScorecard(game, players, 'test.svg')
                 except IncompleteGameException:
                     pass

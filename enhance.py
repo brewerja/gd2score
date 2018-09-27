@@ -27,7 +27,6 @@ HITS_IN_PARK = ('Single', 'Double', 'Triple')
 class GameEnhancer:
     def __init__(self, game, players):
         self.game = game
-        self.actions = game.actions
         self.players = players
         self.players[0] = Player(0, 'Held', 'Runner')
 
@@ -37,8 +36,6 @@ class GameEnhancer:
             self.fix_half_inning(inning.bottom)
 
         self.highlight_runners_who_score()
-
-        return self.game
 
     def fix_half_inning(self, half_inning):
         """Adds a scoring string to each atbat, adds missing runner tags, and
@@ -196,7 +193,7 @@ class GameEnhancer:
             if not runner.end:
                 runner.end = self.find_base_where_out_was_made(
                     self.players[runner.id].last,
-                    self.actions[runner.event_num].des)
+                    self.game.actions[runner.event_num].des)
                 runner.out = True
 
     def find_base_where_out_was_made(self, runner_last_name, des, throw=True):

@@ -7,9 +7,8 @@ from fuzzywuzzy import fuzz
 class PinchRunnerFixer:
     def __init__(self, game, players):
         self.game = game
-        self.flat_atbats = sum([i.top + i.bottom for i in game.innings], [])
         self.players = players
-        self.actions = game.actions
+        self.flat_atbats = sum([i.top + i.bottom for i in game.innings], [])
 
     def fix(self):
         """When a pinch runner is inserted into the game, in addition to the
@@ -17,7 +16,7 @@ class PinchRunnerFixer:
         tags. EX: <runner start="2B" end=""/> <runner start="" end="2B"/>
         These unhelpful tags need to be removed so they are not confused with
         actual runner movement or outs on the bases."""
-        for action in self.actions.values():
+        for action in self.game.actions.values():
             if self.is_pinch_runner(action):
                 pinch_id, original_id = self.get_pinch_runner_swap(action)
                 logging.debug('%d replaces %d', pinch_id, original_id)
@@ -30,7 +29,6 @@ class PinchRunnerFixer:
                 self.remove_pinch_runner_swap(
                     self.flat_atbats[index].mid_pa_runners,
                     pinch_id, original_id, base)
-        return self.game
 
     def is_pinch_runner(self, action):
         return (action.event == 'Offensive Sub' and
