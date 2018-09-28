@@ -35,8 +35,8 @@ class GameBuilder:
 
     def parse_game(self, game_url):
         game_xml = self.get_url(game_url + 'inning/inning_all.xml')
-        return GameParser().parse(game_xml)
-
+        return self.game_parser.parse(game_xml)    
+    
     def get_game_url(self, gid):
         p = gid.split('_')
         return ('%s/year_%04d/month_%02d/day_%02d/%s/' %
@@ -68,6 +68,8 @@ if __name__ == '__main__':
                         format='%(levelname)s:%(message)s',
                         level=logging.INFO)
 
+    game_builder = GameBuilder()
+    draw_scorecard = DrawScorecard()
     start_date = datetime(2018, 3, 29)
     for date in [start_date + timedelta(days=x) for x in range(0, 200)]:
         game_ids = list_game_ids(date.year, date.month, date.day)
@@ -78,8 +80,8 @@ if __name__ == '__main__':
                 continue
             try:
                 logging.info('Processing %s', game_id)
-                game = GameBuilder().build(game_id)
-                drawing = DrawScorecard().draw(game)
+                game = game_builder.build(game_id)
+                drawing = draw_scorecard.draw(game)
                 drawing.saveas('test.svg')
 
                 #input(game_url)

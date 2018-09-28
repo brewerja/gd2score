@@ -25,6 +25,9 @@ HITS_IN_PARK = ('Single', 'Double', 'Triple')
 
 
 class GameEnhancer:
+    def __init__(self):
+        self.runner_highlighter = RunnerHighlighter()
+
     def execute(self, game):
         self.game = game
         self.players = game.players
@@ -217,7 +220,6 @@ class GameEnhancer:
     def highlight_runners_who_score(self):
         half_innings = chain.from_iterable(
             ((i.top, i.bottom) for i in self.game.innings))
-        highlighter = RunnerHighlighter()
 
         for half_inning in half_innings:
-            highlighter.highlight(half_inning)
+            self.runner_highlighter.highlight(half_inning)
