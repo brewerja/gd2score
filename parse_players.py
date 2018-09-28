@@ -24,9 +24,10 @@ class Player:
 
 
 class PlayersParser:
-    def __init__(self, xml):
-        self.players = dict()
+    def parse(self, xml):
+        self.players = {}
         self.parse_players(xml)
+        return self.players
 
     def parse_players(self, xml):
         for team in ET.fromstring(xml):

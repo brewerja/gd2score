@@ -6,17 +6,31 @@ from models import AtBat, Runner, Inning, Action
 BASES = ('1B', '2B', '3B')
 
 
+class Game:
+    def __init__(self):
+        self.innings = []
+        self.actions = {}
+
+    def add_inning(self, inning):
+        self.innings.append(inning)
+
+    def add_action(self, action):
+        if action.event_num not in self.actions:
+            self.actions[action.event_num] = action
+        else:
+            raise Exception('Duplicate action: %d' % action.event_num)
+
+
 class GameParser:
-    def __init__(self, game_xml):
+    def parse(self, game_xml):
         self.inning = 1.0
         self.active_inning = None
         self.active_atbat = None
-
-        self.innings = []
-        self.actions = {}
         self.action_buffer = []
 
+        self.game = Game()
         self.parse_game(game_xml)
+        return self.game
 
     def parse_game(self, xml):
         for inning in ET.fromstring(xml):
@@ -25,7 +39,7 @@ class GameParser:
     def parse_inning(self, inning):
         self.inning = float(inning.attrib['num'])
         self.active_inning = Inning(self.inning)
-        self.innings.append(self.active_inning)
+        self.game.add_inning(self.active_inning)
 
         for half_inning in inning:
             self.parse_half_inning(half_inning)
@@ -84,7 +98,7 @@ class GameParser:
         player_id = int(action.attrib['player'])
         a = Action(event_num, event, des, player_id, self.inning)
 
-        self.add_action(a)
+        self.game.add_action(a)
         self.action_buffer.append(a)
 
     def parse_runner(self, runner):
@@ -104,12 +118,6 @@ class GameParser:
             return int(base[0])
         else:
             raise Exception('Could not parse base: %s' % base)
-
-    def add_action(self, action):
-        if action.event_num not in self.actions:
-            self.actions[action.event_num] = action
-        else:
-            raise Exception('Duplicate action: %d' % action.event_num)
 
 
 class IncompleteGameException(Exception):

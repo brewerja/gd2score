@@ -10,11 +10,14 @@ from constants import (ORIGIN_X, ORIGIN_Y, ATBAT_W, ATBAT_HT, NAME_W, TEXT_HOP,
 
 
 class DrawScorecard:
-    def __init__(self, game, players, svg_filename):
-        self.game = game
-        self.players = players
+    def __init__(self):
+        self.runner_drawer = DrawRunners()
 
-        self.dwg = Drawing(svg_filename, debug=True, profile='full')
+    def draw(self, game):
+        self.game = game
+        self.players = game.players
+
+        self.dwg = Drawing(debug=True, profile='full')
         self.dwg.add_stylesheet('style.css', 'styling')
 
         self.draw_team_boxes()
@@ -23,7 +26,7 @@ class DrawScorecard:
         self.draw_pitcher_hash_marks()
         self.draw_pitcher_names()
 
-        self.dwg.save()
+        return self.dwg
 
     def get_team_box(self, id, ht):
         box = Group()
@@ -88,7 +91,7 @@ class DrawScorecard:
         atbat_group.set_desc(atbat.get_description())
         atbat_group.add(self.get_batter_name_text(atbat))
         atbat_group.add(self.get_scoring_text(atbat))
-        DrawRunners(self.y, atbat, atbat_group).draw()
+        self.runner_drawer.execute(self.y, atbat, atbat_group)
         self.dwg.add(atbat_group)
 
     def set_x_and_anchor(self, inning):

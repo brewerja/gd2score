@@ -25,10 +25,11 @@ HITS_IN_PARK = ('Single', 'Double', 'Triple')
 
 
 class GameEnhancer:
-    def __init__(self, game, players):
+    def execute(self, game):
         self.game = game
-        self.players = players
+        self.players = game.players
         self.players[0] = Player(0, 'Held', 'Runner')
+        self.enhance()
 
     def enhance(self):
         for inning in self.game.innings:

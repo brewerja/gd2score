@@ -9,13 +9,14 @@ from constants import (ORIGIN_X, ATBAT_HT, NAME_W, SCORE_W, BASE_L, CIRCLE_R,
 
 
 class DrawRunners:
-    def __init__(self, y, atbat, atbat_group):
+    def execute(self, y, atbat, atbat_group):
         self.y = y
         self.atbat = atbat
         self.atbat_group = atbat_group
         self.is_home_team_batting = atbat.inning % 1.0
+        self.draw_runners()
 
-    def draw(self):
+    def draw_runners(self):
         self.draw_mid_pa_runners()
         self.draw_atbat_result_runners()
 

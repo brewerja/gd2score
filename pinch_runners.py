@@ -5,12 +5,13 @@ from fuzzywuzzy import fuzz
 
 
 class PinchRunnerFixer:
-    def __init__(self, game, players):
+    def execute(self, game):
         self.game = game
-        self.players = players
+        self.players = game.players
         self.flat_atbats = sum([i.top + i.bottom for i in game.innings], [])
+        self.remove_all_pinch_runner_swaps()
 
-    def fix(self):
+    def remove_all_pinch_runner_swaps(self):
         """When a pinch runner is inserted into the game, in addition to the
         action tag, sometimes the 'swap' is further noted by a pair of runner
         tags. EX: <runner start="2B" end=""/> <runner start="" end="2B"/>
