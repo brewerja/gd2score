@@ -45,20 +45,21 @@ class GameEnhancer:
         for atbat in half_inning:
             self.pinch_runner_fixer.fix(atbat, half_inning, self.players)
             self.fix_mid_pa_runners(atbat)
-
-            outs_on_play = (atbat.outs - outs -
-                            sum([1 for r in atbat.mid_pa_runners if r.out]))
-            if atbat.outs != 3:
-                self.resolve_runners_easy(atbat, outs_on_play)
-            else:
-                self.resolve_runners_3outs(atbat, outs_on_play)
-
+            self.resolve_runners(atbat, outs)
             self.hold_runners(active_runners, atbat)
 
             active_runners = [r for r in atbat.runners
                               if not r.out and r.end != 4]
             outs = atbat.outs
             self.display_atbat(atbat)
+
+    def resolve_runners(self, atbat, outs):
+        outs_on_play = (atbat.outs - outs -
+                        sum([1 for r in atbat.mid_pa_runners if r.out]))
+        if atbat.outs != 3:
+            self.resolve_runners_easy(atbat, outs_on_play)
+        else:
+            self.resolve_runners_3outs(atbat, outs_on_play)
 
     def resolve_runners_easy(self, atbat, outs_on_play):
         """When there's less than 3 outs, the lack of a runner tag for the
