@@ -17,6 +17,9 @@ class PinchRunnerFixer:
         tags. EX: <runner start="2B" end=""/> <runner start="" end="2B"/>
         These unhelpful tags need to be removed so they are not confused with
         actual runner movement or outs on the bases."""
+        # 1. Parse description to get runner swap ids
+        # 2. Find the base where the swap occurred
+        # 3. Remove the swap if one exists in the right atbat at the right base
         for action in self.game.actions.values():
             if self.is_pinch_runner(action):
                 pinch_id, original_id = self.get_pinch_runner_swap(action)

@@ -36,8 +36,8 @@ class GameEnhancer:
 
     def enhance(self):
         for inning in self.game.innings:
-            self.fix_half_inning(inning.top)
-            self.fix_half_inning(inning.bottom)
+            for half_inning in inning.halfs:
+                self.fix_half_inning(half_inning)
 
         self.highlight_runners_who_score()
 
@@ -46,7 +46,7 @@ class GameEnhancer:
         resolves the ending bases of runners with empty end tags."""
         outs = 0
         active_runners = []
-        for atbat in half_inning:
+        for atbat in half_inning.atbats:
             atbat.scoring = get_scoring(atbat)
             self.fix_mid_pa_runners(atbat)
 
@@ -197,7 +197,7 @@ class GameEnhancer:
             if not runner.end:
                 runner.end = self.find_base_where_out_was_made(
                     self.players[runner.id].last,
-                    self.game.actions[runner.event_num].des)
+                    atbat.get_action_by_event_num(runner.event_num).des)
                 runner.out = True
 
     def find_base_where_out_was_made(self, runner_last_name, des, throw=True):
@@ -219,7 +219,7 @@ class GameEnhancer:
 
     def highlight_runners_who_score(self):
         half_innings = chain.from_iterable(
-            ((i.top, i.bottom) for i in self.game.innings))
+            (i.halfs for i in self.game.innings))
 
         for half_inning in half_innings:
             self.runner_highlighter.highlight(half_inning)

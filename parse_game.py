@@ -1,65 +1,37 @@
 import re
 import xml.etree.ElementTree as ET
 
-from models import AtBat, Runner, Inning, Action
+from models import Game, Inning, HalfInning, Action, AtBat, Runner
 
 BASES = ('1B', '2B', '3B')
 
 
-class Game:
-    def __init__(self):
-        self.innings = []
-        self.actions = {}
-
-    def add_inning(self, inning):
-        self.innings.append(inning)
-
-    def add_action(self, action):
-        if action.event_num not in self.actions:
-            self.actions[action.event_num] = action
-        else:
-            raise Exception('Duplicate action: %d' % action.event_num)
-
-
 class GameParser:
-    def parse(self, game_xml):
-        self.inning = 1.0
-        self.active_inning = None
-        self.active_atbat = None
-        self.action_buffer = []
-
-        self.game = Game()
-        self.parse_game(game_xml)
-        return self.game
-
-    def parse_game(self, xml):
+    def parse(self, xml):
+        game = Game()
         for inning in ET.fromstring(xml):
-            self.parse_inning(inning)
+            game.add_inning(self.parse_inning(inning))
+        return game
 
     def parse_inning(self, inning):
-        self.inning = float(inning.attrib['num'])
-        self.active_inning = Inning(self.inning)
-        self.game.add_inning(self.active_inning)
-
+        active_inning = Inning(float(inning.attrib['num']))
         for half_inning in inning:
-            self.parse_half_inning(half_inning)
+            active_inning.add_half(self.parse_half_inning(half_inning))
+        return active_inning
 
     def parse_half_inning(self, half_inning):
-        if half_inning.tag == 'bottom':
-            self.inning += 0.5
-
         if len(half_inning) == 0:
             raise IncompleteGameException()
-        for event in half_inning:
-            self.parse_event(event)
 
-    def parse_event(self, event):
-        if event.tag == 'atbat':
-            self.parse_atbat(event)
-        elif event.tag == 'action':
-            self.parse_action(event)
-        else:
-            raise Exception('Unknown event type')
+        half = HalfInning()
+        for event in half_inning:
+            if event.tag == 'atbat':
+                half.add_atbat(self.parse_atbat(event))
+            elif event.tag == 'action':
+                half.add_action(self.parse_action(event))
+            else:
+                raise Exception('Unknown event type')
+        return half
 
     def parse_atbat(self, atbat):
         pa_num = int(atbat.attrib['num'])
@@ -72,34 +44,26 @@ class GameParser:
         away_score = int(atbat.attrib['away_team_runs'])
         pitcher = int(atbat.attrib['pitcher'])
 
-        self.active_atbat = AtBat(pa_num, event_num, batter, des, event,
-                                  pitcher, self.inning, outs,
-                                  home_score=home_score,
-                                  away_score=away_score)
-
-        for action in self.action_buffer:
-            self.active_atbat.add_action(action)
-        self.action_buffer = []
-
-        self.active_inning.add_event(self.active_atbat)
+        active_atbat = AtBat(pa_num, event_num, batter, des, event,
+                             pitcher, outs,
+                             home_score=home_score, away_score=away_score)
 
         for child in atbat:
             if child.tag == 'runner':
-                self.parse_runner(child)
+                active_atbat.add_runner(self.parse_runner(child))
             elif child.tag in ['pitch', 'po']:
                 pass
             else:
                 raise Exception('Unknown atbat type: %s' % child.tag)
+
+        return active_atbat
 
     def parse_action(self, action):
         event_num = int(action.attrib['event_num'])
         event = action.attrib['event']
         des = re.sub('\s+', ' ', action.attrib['des']).strip()
         player_id = int(action.attrib['player'])
-        a = Action(event_num, event, des, player_id, self.inning)
-
-        self.game.add_action(a)
-        self.action_buffer.append(a)
+        return Action(event_num, event, des, player_id)
 
     def parse_runner(self, runner):
         id = int(runner.attrib['id'])
@@ -109,7 +73,7 @@ class GameParser:
 
         if runner.attrib.get('score') == 'T':  # Scores!
             end = 4
-        self.active_atbat.add_runner(Runner(id, start, end, event_num))
+        return Runner(id, start, end, event_num)
 
     def parse_base(self, base):
         if not base:

@@ -9,11 +9,11 @@ from constants import (ORIGIN_X, ATBAT_HT, NAME_W, SCORE_W, BASE_L, CIRCLE_R,
 
 
 class DrawRunners:
-    def execute(self, y, atbat, atbat_group):
+    def execute(self, y, atbat, atbat_group, is_home_team_batting):
         self.y = y
         self.atbat = atbat
         self.atbat_group = atbat_group
-        self.is_home_team_batting = atbat.inning % 1.0
+        self.is_home_team_batting = is_home_team_batting
         self.draw_runners()
 
     def draw_runners(self):

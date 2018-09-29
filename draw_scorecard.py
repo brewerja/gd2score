@@ -40,13 +40,15 @@ class DrawScorecard:
         return box
 
     def draw_team_boxes(self):
-        away_ht = sum([max(len(inning.top), len(inning.bottom))
-                       for inning in self.game.innings]) * ATBAT_HT
+        away_ht = sum(
+            self.get_inning_height(inning) for inning in
+            self.game.innings) * ATBAT_HT
         away_team = self.get_team_box('away_team', away_ht)
 
         home_ht = away_ht
         if self.is_no_final_bottom():
-            home_ht = away_ht - len(self.game.innings[-1].top) * ATBAT_HT
+            final_inning = self.game.innings[-1]
+            home_ht = away_ht - len(final_inning.halfs[0].atbats) * ATBAT_HT
         home_team = self.get_team_box('home_team', home_ht)
         flip(home_team)
 
@@ -56,7 +58,7 @@ class DrawScorecard:
     def draw_inning_separators(self):
         y = ORIGIN_Y
         for i, inning in enumerate(self.game.innings[:-1]):
-            y += ATBAT_HT * max(len(inning.top), len(inning.bottom))
+            y += ATBAT_HT * self.get_inning_height(inning)
             self.dwg.add(Line((ORIGIN_X, y), (ORIGIN_X + ATBAT_W, y),
                               class_='team-box'))
             if (i == len(self.game.innings) - 2 and
@@ -74,24 +76,26 @@ class DrawScorecard:
     def draw_inning(self, inning):
         inning_start_y = self.y
         inning_end_y = 0
-        for half_inning in [inning.top, inning.bottom]:
+        for half_inning in inning.halfs:
             self.y = inning_start_y
             self.draw_half_inning(half_inning)
             inning_end_y = max(inning_end_y, self.y)
         self.y = inning_end_y
 
     def draw_half_inning(self, half_inning):
-        for atbat in half_inning:
-            self.draw_atbat(atbat)
+        for atbat in half_inning.atbats:
+            self.set_x_and_anchor(half_inning.num)
+            is_home_team_batting = half_inning.num % 1.0
+            self.draw_atbat(atbat, is_home_team_batting)
             self.y += ATBAT_HT
 
-    def draw_atbat(self, atbat):
-        self.set_x_and_anchor(atbat.inning)
+    def draw_atbat(self, atbat, is_home_team_batting):
         atbat_group = Group()
         atbat_group.set_desc(atbat.get_description())
         atbat_group.add(self.get_batter_name_text(atbat))
         atbat_group.add(self.get_scoring_text(atbat))
-        self.runner_drawer.execute(self.y, atbat, atbat_group)
+        self.runner_drawer.execute(self.y, atbat, atbat_group,
+                                   is_home_team_batting)
         self.dwg.add(atbat_group)
 
     def set_x_and_anchor(self, inning):
@@ -126,28 +130,31 @@ class DrawScorecard:
         self.home_hash_ys = []
 
         # Starting pitchers
-        self.home_pitchers = [self.game.innings[0].top[0].pitcher]
-        self.away_pitchers = [self.game.innings[0].bottom[0].pitcher]
+        self.home_pitchers = [self.game.innings[0].halfs[0].atbats[0].pitcher]
+        self.away_pitchers = [self.game.innings[0].halfs[1].atbats[0].pitcher]
 
         self.y = ORIGIN_Y
         self.draw_both_hashes()
         for inning in self.game.innings:
             inning_start = self.y
-            for half_inning in [inning.top, inning.bottom]:
-                for atbat in half_inning:
+            for half_inning in inning.halfs:
+                for atbat in half_inning.atbats:
                     if (atbat.pitcher != self.home_pitchers[-1] and
                             atbat.pitcher != self.away_pitchers[-1]):
-                        self.draw_hash(atbat.inning)
-                        self.swap_pitcher(atbat)
+                        self.draw_hash(half_inning.num)
+                        self.swap_pitcher(atbat.pitcher, half_inning.num)
                     self.y += ATBAT_HT
                 self.y = inning_start
             self.y = (inning_start +
-                      ATBAT_HT * max(len(inning.top), len(inning.bottom)))
+                      ATBAT_HT * self.get_inning_height(inning))
 
         self.draw_hash(1.0)
         if self.is_no_final_bottom():
-            self.y = self.y - ATBAT_HT * len(inning.top)
+            self.y = self.y - ATBAT_HT * len(inning.halfs[0].atbats)
         self.draw_hash(1.5)
+
+    def get_inning_height(self, inning):
+        return max(len(h.atbats) for h in inning.halfs)
 
     def draw_both_hashes(self):
         self.draw_hash(1.0)
@@ -168,14 +175,14 @@ class DrawScorecard:
         line['class'] = 'pitcher-hash'
         self.dwg.add(line)
 
-    def swap_pitcher(self, atbat):
-        if self.is_home_team_batting(atbat.inning):
-            self.away_pitchers.append(atbat.pitcher)
+    def swap_pitcher(self, pitcher, inning_num):
+        if self.is_home_team_batting(inning_num):
+            self.away_pitchers.append(pitcher)
         else:
-            self.home_pitchers.append(atbat.pitcher)
+            self.home_pitchers.append(pitcher)
 
     def is_no_final_bottom(self):
-        return self.game.innings and not self.game.innings[-1].bottom
+        return self.game.innings and not len(self.game.innings[-1].halfs) == 2
 
     def draw_pitcher_names(self):
         self._draw_pitcher_names(self.away_hash_ys, False)

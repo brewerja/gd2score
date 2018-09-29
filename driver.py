@@ -25,7 +25,7 @@ class GameBuilder:
         players = self.parse_players(game_url)
         game = self.parse_game(game_url)
         game.players = players
-        self.pinch_runner_fixer.execute(game)
+        #self.pinch_runner_fixer.execute(game)
         self.game_enhancer.execute(game)
         return game
 
@@ -84,7 +84,7 @@ if __name__ == '__main__':
                 drawing = draw_scorecard.draw(game)
                 drawing.saveas('test.svg')
 
-                #input(game_url)
+                input(game_id)
             except urllib.error.HTTPError:
                 logging.info('Not found: %s', game_id)
             except IncompleteGameException:

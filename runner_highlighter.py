@@ -1,7 +1,7 @@
 class RunnerHighlighter:
     def highlight(self, half_inning):
         self.bases_scored_from = []
-        for atbat in reversed(half_inning):
+        for atbat in reversed(half_inning.atbats):
             self.bases_new = []
             self.parse_atbat_ending_runners(atbat)
             self.parse_mid_pa_runners(atbat)
