@@ -1,5 +1,7 @@
 from collections import namedtuple
 
+from scoring import get_scoring
+
 Action = namedtuple('Action', 'event_num event des player')
 
 
@@ -85,7 +87,7 @@ class HalfInning(Iter):
 class AtBat:
     def __init__(self, pa_num, event_num, batter, des, event, pitcher,
                  outs=0, home_score=0, away_score=0,
-                 mid_pa_runners=None, runners=None, scoring=None):
+                 mid_pa_runners=None, runners=None):
 
         self.pa_num = pa_num
         self.event_num = event_num
@@ -109,8 +111,8 @@ class AtBat:
         self.home_score = home_score
         self.away_score = away_score
 
-        self.scoring = scoring
         self.actions = []
+        self.scoring = get_scoring(self)
 
     def get_action_by_event_num(self, event_num):
         for action in self.actions:

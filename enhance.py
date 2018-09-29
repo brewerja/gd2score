@@ -1,7 +1,6 @@
 import re
 import logging
 
-from scoring import get_scoring
 from models import Runner
 from parse_players import Player
 from runner_highlighter import RunnerHighlighter
@@ -32,9 +31,7 @@ class GameEnhancer:
     def execute(self, game):
         self.players = game.players
         self.players[0] = Player(0, 'Held', 'Runner')
-        self.enhance(game)
 
-    def enhance(self, game):
         for inning in game:
             for half_inning in inning:
                 self.fix_half_inning(half_inning)
@@ -47,7 +44,6 @@ class GameEnhancer:
         active_runners = []
         for atbat in half_inning:
             self.pinch_runner_fixer.fix(atbat, half_inning, self.players)
-            atbat.scoring = get_scoring(atbat)
             self.fix_mid_pa_runners(atbat)
 
             outs_on_play = (atbat.outs - outs -
