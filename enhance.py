@@ -1,6 +1,5 @@
 import re
 import logging
-from itertools import chain
 
 from scoring import get_scoring
 from models import Runner
@@ -31,24 +30,22 @@ class GameEnhancer:
         self.pinch_runner_fixer = PinchRunnerFixer()
 
     def execute(self, game):
-        self.game = game
         self.players = game.players
         self.players[0] = Player(0, 'Held', 'Runner')
-        self.enhance()
+        self.enhance(game)
 
-    def enhance(self):
-        for inning in self.game.innings:
-            for half_inning in inning.halves:
+    def enhance(self, game):
+        for inning in game:
+            for half_inning in inning:
                 self.fix_half_inning(half_inning)
-
-        self.highlight_runners_who_score()
+                self.runner_highlighter.highlight(half_inning)
 
     def fix_half_inning(self, half_inning):
         """Adds a scoring string to each atbat, adds missing runner tags, and
         resolves the ending bases of runners with empty end tags."""
         outs = 0
         active_runners = []
-        for atbat in half_inning.atbats:
+        for atbat in half_inning:
             self.pinch_runner_fixer.fix(atbat, half_inning, self.players)
             atbat.scoring = get_scoring(atbat)
             self.fix_mid_pa_runners(atbat)
@@ -219,10 +216,3 @@ class GameEnhancer:
         if throw:
             raise Exception('Cannot find base where %s was put out:\n%s' %
                             (runner_last_name, des))
-
-    def highlight_runners_who_score(self):
-        half_innings = chain.from_iterable(
-            (i.halves for i in self.game.innings))
-
-        for half_inning in half_innings:
-            self.runner_highlighter.highlight(half_inning)

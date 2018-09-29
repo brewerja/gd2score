@@ -19,18 +19,37 @@ class Runner:
         return self.__str__()
 
 
-class Game:
+class Iter:
+    def __init__(self, array):
+        self.array = array
+
+    def __iter__(self):
+        self._n = 0
+        return self
+
+    def __next__(self):
+        if self._n < len(self.array):
+            ret_val = self.array[self._n]
+            self._n += 1
+            return ret_val
+        else:
+            raise StopIteration
+
+
+class Game(Iter):
     def __init__(self):
         self.innings = []
+        Iter.__init__(self, self.innings)
 
     def add_inning(self, inning):
         self.innings.append(inning)
 
 
-class Inning:
+class Inning(Iter):
     def __init__(self, num):
         self.num = int(num)
         self.halves = []
+        Iter.__init__(self, self.halves)
 
     def add_half(self, half_inning):
         if not self.halves:
@@ -44,10 +63,11 @@ class Inning:
         return 'Inning %d' % (self.num)
 
 
-class HalfInning:
+class HalfInning(Iter):
     def __init__(self):
         self.atbats = []
         self.init_action_buffer()
+        Iter.__init__(self, self.atbats)
 
     def init_action_buffer(self):
         self.action_buffer = []
