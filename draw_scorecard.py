@@ -48,7 +48,7 @@ class DrawScorecard:
         home_ht = away_ht
         if self.is_no_final_bottom():
             final_inning = self.game.innings[-1]
-            home_ht = away_ht - len(final_inning.halfs[0].atbats) * ATBAT_HT
+            home_ht = away_ht - len(final_inning.halves[0].atbats) * ATBAT_HT
         home_team = self.get_team_box('home_team', home_ht)
         flip(home_team)
 
@@ -76,7 +76,7 @@ class DrawScorecard:
     def draw_inning(self, inning):
         inning_start_y = self.y
         inning_end_y = 0
-        for half_inning in inning.halfs:
+        for half_inning in inning.halves:
             self.y = inning_start_y
             self.draw_half_inning(half_inning)
             inning_end_y = max(inning_end_y, self.y)
@@ -130,14 +130,14 @@ class DrawScorecard:
         self.home_hash_ys = []
 
         # Starting pitchers
-        self.home_pitchers = [self.game.innings[0].halfs[0].atbats[0].pitcher]
-        self.away_pitchers = [self.game.innings[0].halfs[1].atbats[0].pitcher]
+        self.home_pitchers = [self.game.innings[0].halves[0].atbats[0].pitcher]
+        self.away_pitchers = [self.game.innings[0].halves[1].atbats[0].pitcher]
 
         self.y = ORIGIN_Y
         self.draw_both_hashes()
         for inning in self.game.innings:
             inning_start = self.y
-            for half_inning in inning.halfs:
+            for half_inning in inning.halves:
                 for atbat in half_inning.atbats:
                     if (atbat.pitcher != self.home_pitchers[-1] and
                             atbat.pitcher != self.away_pitchers[-1]):
@@ -150,11 +150,11 @@ class DrawScorecard:
 
         self.draw_hash(1.0)
         if self.is_no_final_bottom():
-            self.y = self.y - ATBAT_HT * len(inning.halfs[0].atbats)
+            self.y = self.y - ATBAT_HT * len(inning.halves[0].atbats)
         self.draw_hash(1.5)
 
     def get_inning_height(self, inning):
-        return max(len(h.atbats) for h in inning.halfs)
+        return max(len(h.atbats) for h in inning.halves)
 
     def draw_both_hashes(self):
         self.draw_hash(1.0)
@@ -182,7 +182,7 @@ class DrawScorecard:
             self.home_pitchers.append(pitcher)
 
     def is_no_final_bottom(self):
-        return self.game.innings and not len(self.game.innings[-1].halfs) == 2
+        return self.game.innings and not len(self.game.innings[-1].halves) == 2
 
     def draw_pitcher_names(self):
         self._draw_pitcher_names(self.away_hash_ys, False)

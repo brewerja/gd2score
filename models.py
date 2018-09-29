@@ -30,15 +30,15 @@ class Game:
 class Inning:
     def __init__(self, num):
         self.num = int(num)
-        self.halfs = []
+        self.halves = []
 
     def add_half(self, half_inning):
-        if not self.halfs:
+        if not self.halves:
             half_inning.num = self.num
         else:
             half_inning.num = self.num + 0.5
-        self.halfs.append(half_inning)
-        assert len(self.halfs) in (1, 2)
+        self.halves.append(half_inning)
+        assert len(self.halves) in (1, 2)
 
     def __str__(self):
         return 'Inning %d' % (self.num)

@@ -36,7 +36,7 @@ class GameEnhancer:
 
     def enhance(self):
         for inning in self.game.innings:
-            for half_inning in inning.halfs:
+            for half_inning in inning.halves:
                 self.fix_half_inning(half_inning)
 
         self.highlight_runners_who_score()
@@ -219,7 +219,7 @@ class GameEnhancer:
 
     def highlight_runners_who_score(self):
         half_innings = chain.from_iterable(
-            (i.halfs for i in self.game.innings))
+            (i.halves for i in self.game.innings))
 
         for half_inning in half_innings:
             self.runner_highlighter.highlight(half_inning)
