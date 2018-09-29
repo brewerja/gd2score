@@ -8,7 +8,6 @@ from parse_game import GameParser, IncompleteGameException
 from parse_players import PlayersParser
 from draw_scorecard import DrawScorecard
 from enhance import GameEnhancer
-from pinch_runners import PinchRunnerFixer
 
 GD2_URL = 'https://gd2.mlb.com/components/game/mlb'
 
@@ -17,7 +16,6 @@ class GameBuilder:
     def __init__(self):
         self.game_parser = GameParser()
         self.players_parser = PlayersParser()
-        self.pinch_runner_fixer = PinchRunnerFixer()
         self.game_enhancer = GameEnhancer()
 
     def build(self, game_id):
@@ -25,7 +23,6 @@ class GameBuilder:
         players = self.parse_players(game_url)
         game = self.parse_game(game_url)
         game.players = players
-        #self.pinch_runner_fixer.execute(game)
         self.game_enhancer.execute(game)
         return game
 
@@ -84,7 +81,7 @@ if __name__ == '__main__':
                 drawing = draw_scorecard.draw(game)
                 drawing.saveas('test.svg')
 
-                input(game_id)
+                #input(game_id)
             except urllib.error.HTTPError:
                 logging.info('Not found: %s', game_id)
             except IncompleteGameException:

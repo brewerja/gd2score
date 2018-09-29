@@ -6,6 +6,7 @@ from scoring import get_scoring
 from models import Runner
 from parse_players import Player
 from runner_highlighter import RunnerHighlighter
+from pinch_runners import PinchRunnerFixer
 
 BASE_NUMBER = {
     '1st': 1,
@@ -27,6 +28,7 @@ HITS_IN_PARK = ('Single', 'Double', 'Triple')
 class GameEnhancer:
     def __init__(self):
         self.runner_highlighter = RunnerHighlighter()
+        self.pinch_runner_fixer = PinchRunnerFixer()
 
     def execute(self, game):
         self.game = game
@@ -47,6 +49,7 @@ class GameEnhancer:
         outs = 0
         active_runners = []
         for atbat in half_inning.atbats:
+            self.pinch_runner_fixer.fix(atbat, half_inning, self.players)
             atbat.scoring = get_scoring(atbat)
             self.fix_mid_pa_runners(atbat)
 

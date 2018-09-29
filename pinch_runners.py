@@ -5,34 +5,23 @@ from fuzzywuzzy import fuzz
 
 
 class PinchRunnerFixer:
-    def execute(self, game):
-        self.game = game
-        self.players = game.players
-        self.flat_atbats = sum([i.top + i.bottom for i in game.innings], [])
-        self.remove_all_pinch_runner_swaps()
-
-    def remove_all_pinch_runner_swaps(self):
+    def fix(self, atbat, half_inning, players):
         """When a pinch runner is inserted into the game, in addition to the
         action tag, sometimes the 'swap' is further noted by a pair of runner
         tags. EX: <runner start="2B" end=""/> <runner start="" end="2B"/>
         These unhelpful tags need to be removed so they are not confused with
         actual runner movement or outs on the bases."""
-        # 1. Parse description to get runner swap ids
-        # 2. Find the base where the swap occurred
-        # 3. Remove the swap if one exists in the right atbat at the right base
-        for action in self.game.actions.values():
+        self.players = players
+        for action in atbat.actions:
             if self.is_pinch_runner(action):
                 pinch_id, original_id = self.get_pinch_runner_swap(action)
                 logging.debug('%d replaces %d', pinch_id, original_id)
-                index = self.get_atbat_index(action.event_num)
-                base = self.get_runner_last_base(index, original_id)
+                base = self.get_swap_base(atbat, half_inning, original_id)
                 logging.debug('Swap at base: %d', base)
                 self.remove_pinch_runner_swap(
-                    self.flat_atbats[index].runners,
-                    pinch_id, original_id, base)
+                    atbat.runners, pinch_id, original_id, base)
                 self.remove_pinch_runner_swap(
-                    self.flat_atbats[index].mid_pa_runners,
-                    pinch_id, original_id, base)
+                    atbat.mid_pa_runners, pinch_id, original_id, base)
 
     def is_pinch_runner(self, action):
         return (action.event == 'Offensive Sub' and
@@ -61,27 +50,21 @@ class PinchRunnerFixer:
                 return player.id
         raise Exception('Player %s not found' % full_name)
 
-    def get_atbat_index(self, event_num):
-        for i, atbat in enumerate(self.flat_atbats):
-            if atbat.event_num >= event_num:
-                return i
-
-    def get_runner_last_base(self, swap_idx, original_runner_id):
+    def get_swap_base(self, atbat, half_inning, original_runner_id):
         """Returns the base where the pinch runner swap occurs by searching
         the half inning backwards from when the swap happened. First, check for
         runner advancement during the PA beofre when pinch runner appeared."""
-        mid_pa_advances = [r for r in self.flat_atbats[swap_idx].mid_pa_runners
+        mid_pa_advances = [r for r in atbat.mid_pa_runners
                            if r.id == original_runner_id]
         if mid_pa_advances:
             return max([r.end for r in mid_pa_advances])
 
-        for atbat in reversed(self.flat_atbats[:swap_idx]):
+        swap_idx = half_inning.atbats.index(atbat)
+        for atbat in reversed(half_inning.atbats[:swap_idx]):
             for runner in atbat.runners:
                 if runner.id == original_runner_id:
                     assert runner.end
                     return runner.end
-            if atbat.inning != self.flat_atbats[swap_idx].inning:
-                break
         raise Exception('Base not found')
 
     def remove_pinch_runner_swap(
