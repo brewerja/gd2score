@@ -11,10 +11,12 @@ class PinchRunnerFixer:
         tags. EX: <runner start="2B" end=""/> <runner start="" end="2B"/>
         These unhelpful tags need to be removed so they are not confused with
         actual runner movement or outs on the bases."""
-        self.players = players
         for action in atbat.actions:
             if self.is_pinch_runner(action):
-                pinch_id, original_id = self.get_pinch_runner_swap(action)
+                pinch_name, original_name = self.get_swap_names(action)
+                pinch_id = self.lookup_player(pinch_name, players)
+                original_id = self.lookup_player(original_name, players)
+
                 logging.debug('%d replaces %d', pinch_id, original_id)
                 base = self.get_swap_base(atbat, half_inning, original_id)
                 logging.debug('Swap at base: %d', base)
@@ -27,25 +29,22 @@ class PinchRunnerFixer:
         return (action.event == 'Offensive Sub' and
                 'Offensive Substitution: Pinch-runner' in action.des)
 
-    def get_pinch_runner_swap(self, action):
-        """Inspects the action description and returns the ids of the pinch
+    def get_swap_names(self, action):
+        """Inspects the action description and returns the names of the pinch
         runner and the runner he is replacing."""
         g = re.search('Pinch-runner (.*) replaces (.*).', action.des)
         pinch_runner_name = g.group(1).strip()
         original_runner_name = g.group(2).strip()
         logging.debug('%s replaces %s', pinch_runner_name,
                       original_runner_name)
+        return pinch_runner_name, original_runner_name
 
-        pinch_runner_id = self.lookup_player(pinch_runner_name)
-        original_runner_id = self.lookup_player(original_runner_name)
-        return pinch_runner_id, original_runner_id
-
-    def lookup_player(self, full_name):
-        """Tries to lookup a player record given the full name."""
-        for player in self.players.values():
+    def lookup_player(self, full_name, players):
+        """Tries to lookup a player id record given the full name."""
+        for player in players.values():
             if player.full_name() == full_name:
                 return player.id
-        for player in self.players.values():  # Second try!
+        for player in players.values():  # Second try!
             if fuzz.ratio(player.full_name(), full_name) > 80:
                 return player.id
         raise Exception('Player %s not found' % full_name)
@@ -53,7 +52,7 @@ class PinchRunnerFixer:
     def get_swap_base(self, atbat, half_inning, original_runner_id):
         """Returns the base where the pinch runner swap occurs by searching
         the half inning backwards from when the swap happened. First, check for
-        runner advancement during the PA beofre when pinch runner appeared."""
+        runner advancement during the PA before when pinch runner appeared."""
         mid_pa_advances = [r for r in atbat.mid_pa_runners
                            if r.id == original_runner_id]
         if mid_pa_advances:
