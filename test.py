@@ -16,16 +16,16 @@ class PlayerTest(unittest.TestCase):
 class PlayersParserTest(unittest.TestCase):
     def setUp(self):
         with open('players.xml', 'rb') as f:
-            self.xml = f.read()
-        self.pp = PlayersParser(self.xml)
+            xml = f.read()
+        self.players = PlayersParser().parse(xml)
 
     def test_number_of_players(self):
-        self.assertEqual(len(self.pp.players), 59)
+        self.assertEqual(len(self.players), 59)
 
     def test_players_from_each_team(self):
-        self.assertEqual(self.pp.players.get(519306).__str__(), 'S. Souza Jr.')
-        self.assertEqual(self.pp.players.get(572041).__str__(), 'A. J. Pollock')
-        self.assertEqual(self.pp.players.get(547179).__str__(), 'M. Lorenzen')
+        self.assertEqual(self.players.get(519306).__str__(), 'S. Souza Jr.')
+        self.assertEqual(self.players.get(572041).__str__(), 'A. J. Pollock')
+        self.assertEqual(self.players.get(547179).__str__(), 'M. Lorenzen')
 
 
 if __name__ == '__main__':
