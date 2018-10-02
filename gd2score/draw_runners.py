@@ -4,8 +4,8 @@ import math
 from svgwrite.shapes import Circle, Line
 from svgwrite.container import Group
 
-from constants import (ORIGIN_X, ATBAT_HT, NAME_W, SCORE_W, BASE_L, CIRCLE_R,
-                       X_SIZE, OUT_SHORTEN, flip)
+from .constants import (ORIGIN_X, ATBAT_HT, NAME_W, SCORE_W, BASE_L, CIRCLE_R,
+                        X_SIZE, OUT_SHORTEN, flip)
 
 
 class DrawRunners:

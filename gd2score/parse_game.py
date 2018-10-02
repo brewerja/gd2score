@@ -1,7 +1,7 @@
 import re
 import xml.etree.ElementTree as ET
 
-from models import Game, Inning, HalfInning, Action, AtBat, Runner
+from .models import Game, Inning, HalfInning, Action, AtBat, Runner
 
 BASES = ('1B', '2B', '3B')
 

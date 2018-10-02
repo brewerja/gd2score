@@ -1,10 +1,10 @@
 import re
 import logging
 
-from models import Runner
-from parse_players import Player
-from runner_highlighter import RunnerHighlighter
-from pinch_runners import PinchRunnerFixer
+from .models import Runner
+from .parse_players import Player
+from .runner_highlighter import RunnerHighlighter
+from .pinch_runners import PinchRunnerFixer
 
 BASE_NUMBER = {
     '1st': 1,

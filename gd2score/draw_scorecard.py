@@ -3,10 +3,11 @@ from svgwrite.shapes import Line, Rect
 from svgwrite.text import Text
 from svgwrite.container import Group
 
-from draw_runners import DrawRunners
-from constants import (ORIGIN_X, ORIGIN_Y, ATBAT_W, ATBAT_HT, NAME_W, TEXT_HOP,
-                       SCORE_W, SEPARATION, AWAY_NAME_X, AWAY_SCORING_X,
-                       HOME_NAME_X, HOME_SCORING_X, flip)
+from .draw_runners import DrawRunners
+from .constants import (ORIGIN_X, ORIGIN_Y, ATBAT_W, ATBAT_HT, NAME_W,
+                        TEXT_HOP, SCORE_W, SEPARATION,
+                        AWAY_NAME_X, AWAY_SCORING_X,
+                        HOME_NAME_X, HOME_SCORING_X, flip)
 
 
 class DrawScorecard:
@@ -18,7 +19,6 @@ class DrawScorecard:
         self.players = game.players
 
         self.dwg = Drawing(debug=True, profile='full')
-        self.dwg.add_stylesheet('style.css', 'styling')
 
         self.draw_team_boxes()
         self.draw_inning_separators()

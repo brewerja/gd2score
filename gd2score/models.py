@@ -1,6 +1,6 @@
 from collections import namedtuple
 
-from scoring import get_scoring
+from .scoring import get_scoring
 
 Action = namedtuple('Action', 'event_num event des player')
 
