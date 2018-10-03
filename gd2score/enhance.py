@@ -181,11 +181,6 @@ class GameEnhancer:
     def get_mid_pa_end_base(self, atbat, runner_id):
         return max([r.end for r in atbat.mid_pa_runners if r.id == runner_id])
 
-    def get_runner_end_base_previous_pa(self, atbat, runner_id):
-        atbat_idx = self.get_atbat_index(atbat.event_num)
-        prev_atbat = self.flat_atbats[atbat_idx - 1]
-        return [r for r in prev_atbat.runners if r.id == runner_id][0].end
-
     def fix_mid_pa_runners(self, atbat):
         """All runner tags in the middle of the plate appearance without an
         ending base are out on the basepaths. This records the base and marks
