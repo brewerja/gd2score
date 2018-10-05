@@ -18,7 +18,7 @@ OUTS_ON_BASES = ('(?:out at|doubled off|picked off and caught stealing|'
 
 LONG_BASE = '(%s)' % '|'.join(BASE_NUMBER.keys())
 
-PICKS_OFF = 'picks off .*'
+PICKS_OFF = 'picks off .* %s at %s'
 
 HITS_IN_PARK = ('Single', 'Double', 'Triple')
 
@@ -200,11 +200,14 @@ class GameEnhancer:
         if g:
             return BASE_NUMBER[g.group(1)]
 
-        g = re.search(PICKS_OFF + ' %s at %s' % (runner_last_name, LONG_BASE),
-                      des)
+        g = re.search(PICKS_OFF % (runner_last_name, LONG_BASE), des)
         if g:
             return BASE_NUMBER[g.group(1)]
 
         if throw:
-            raise Exception('Cannot find base where %s was put out:\n%s' %
+            raise BaseNotFoundException(
+                'Cannot find base where %s was put out:\n%s' %
                             (runner_last_name, des))
+
+class BaseNotFoundException(Exception):
+    pass
