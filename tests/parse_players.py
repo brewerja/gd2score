@@ -15,12 +15,23 @@ class PlayerTest(unittest.TestCase):
 
 class PlayersParserTest(unittest.TestCase):
     def setUp(self):
-        with open('players.xml', 'rb') as f:
-            xml = f.read()
+        xml = """
+            <game>
+              <team>
+                <player id="519306" first="Steven" last="Souza Jr."/>
+                <player id="572041" first="A.J." last="Pollock"/>
+              </team>
+              <team>
+                <player id="547179" first="Michael" last="Lorenzen"/>
+              </team>
+              <umpires>
+                <umpire position="home" name="Jerry Layne"/>
+              </umpires>
+            </game>"""
         self.players = PlayersParser().parse(xml)
 
     def test_number_of_players(self):
-        self.assertEqual(len(self.players), 59)
+        self.assertEqual(len(self.players), 3)
 
     def test_players_from_each_team(self):
         self.assertEqual(self.players.get(519306).__str__(), 'S. Souza Jr.')
