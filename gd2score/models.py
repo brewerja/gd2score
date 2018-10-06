@@ -1,4 +1,5 @@
 from collections import namedtuple
+import re
 
 from .scoring import get_scoring
 
@@ -136,3 +137,24 @@ class AtBat:
         if self.des not in descriptions:
             descriptions.append(self.des)
         return '\n'.join(descriptions)
+
+
+class Player:
+    def __init__(self, id, first, last):
+        self.id = id
+        if re.match('[A-Z]\.\s?[A-Z]\.\s*', first):
+            # 'A.J.' --> 'A. J.'
+            self.first = '%s %s' % (first[:2], first[2:])
+        else:
+            self.first = first
+        self.last = last
+
+    def full_name(self):
+        return ' '.join((self.first, self.last))
+
+    def __str__(self):
+        uppers = ['%s.' % c for c in self.first if c.isupper()]
+        return '%s %s' % (' '.join(uppers), self.last)
+
+    def __repr__(self):
+        return self.__str__()

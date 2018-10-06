@@ -1,8 +1,7 @@
 import re
 import logging
 
-from .models import Runner
-from .parse_players import Player
+from .models import Runner, Player
 from .runner_highlighter import RunnerHighlighter
 from .pinch_runners import PinchRunnerFixer
 
@@ -207,7 +206,8 @@ class GameEnhancer:
         if throw:
             raise BaseNotFoundException(
                 'Cannot find base where %s was put out:\n%s' %
-                            (runner_last_name, des))
+                (runner_last_name, des))
+
 
 class BaseNotFoundException(Exception):
     pass

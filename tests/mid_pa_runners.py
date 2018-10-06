@@ -1,8 +1,7 @@
 import unittest
 
 from gd2score.enhance import GameEnhancer
-from gd2score.models import Action, AtBat, Runner
-from gd2score.parse_players import Player
+from gd2score.models import Action, AtBat, Runner, Player
 
 
 class TestFixMidPaRunners(unittest.TestCase):

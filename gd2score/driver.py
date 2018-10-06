@@ -30,8 +30,8 @@ class GameBuilder:
 
     def parse_game(self, game_url):
         game_xml = self.get_url(game_url + 'inning/inning_all.xml')
-        return self.game_parser.parse(game_xml)    
-    
+        return self.game_parser.parse(game_xml)
+
     def get_game_url(self, gid):
         g = re.match(GID_REGEX, gid)
         if not g:

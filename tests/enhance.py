@@ -1,8 +1,7 @@
 import unittest
 
 from gd2score.enhance import GameEnhancer, BaseNotFoundException
-from gd2score.parse_players import Player
-from gd2score.models import AtBat, Runner
+from gd2score.models import AtBat, Runner, Player
 
 
 class TestGameEnhancer(unittest.TestCase):

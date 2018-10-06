@@ -1,6 +1,7 @@
 import unittest
 
-from gd2score.parse_players import Player, PlayersParser
+from gd2score.parse_players import PlayersParser
+from gd2score.models import Player
 
 
 class PlayerTest(unittest.TestCase):
