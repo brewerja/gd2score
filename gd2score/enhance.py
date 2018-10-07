@@ -72,10 +72,8 @@ class GameEnhancer:
 
         if outs_on_play != runner_outs + batter_out:
             # Walkoff, runner on base that doesn't score
-            if self.flat_atbats[-1] == atbat:
-                return
-            else:
-                raise Exception()
+            # TODO: Need to handle walkoffs
+            raise Exception('Is this a walkoff?')
 
         # Batter out trying to take an extra base
         if not batter_runner and atbat.event in HITS_IN_PARK:
