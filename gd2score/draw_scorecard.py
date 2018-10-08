@@ -166,13 +166,10 @@ class DrawScorecard:
         if self.is_home_team_batting(inning):
             flip(line)
             self.home_hash_ys.append(self.y)
-            index = len(self.home_hash_ys) - 1
-            line['id'] = 'home-pitcher-hash-%02d' % index
+            line['class'] = 'away-pitcher-hash'
         else:
             self.away_hash_ys.append(self.y)
-            index = len(self.away_hash_ys) - 1
-            line['id'] = 'away-pitcher-hash-%02d' % index
-        line['class'] = 'pitcher-hash'
+            line['class'] = 'home-pitcher-hash'
         self.dwg.add(line)
 
     def swap_pitcher(self, pitcher, inning_num):
@@ -199,12 +196,13 @@ class DrawScorecard:
                 pitcher_name = self.players[self.home_pitchers[i]]
             txt = Text(pitcher_name, x=[x], y=[y_t], text_anchor='middle',
                        alignment_baseline='middle')
-            txt['class'] = 'pitcher-name'
             if flip:
                 txt['id'] = 'away-pitcher-%02d' % i
+                txt['class'] = 'away-pitcher-name'
                 txt.rotate(-90, (x, y_t))
             else:
                 txt['id'] = 'home-pitcher-%02d' % i
+                txt['class'] = 'home-pitcher-name'
                 txt.rotate(90, (x, y_t))
 
             self.dwg.add(txt)
