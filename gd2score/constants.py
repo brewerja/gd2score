@@ -16,6 +16,9 @@ CIRCLE_R = 1.5
 X_SIZE = 3
 OUT_SHORTEN = 10
 
+HASH_SEP = 20
+HASH_LEN = 10
+
 
 def flip(graphic):
     graphic.translate(SEPARATION + 2 * (ORIGIN_X + ATBAT_W), 0)

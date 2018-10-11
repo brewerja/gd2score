@@ -7,7 +7,7 @@ from .draw_runners import DrawRunners
 from .constants import (ORIGIN_X, ORIGIN_Y, ATBAT_W, ATBAT_HT, NAME_W,
                         TEXT_HOP, SCORE_W, SEPARATION,
                         AWAY_NAME_X, AWAY_SCORING_X,
-                        HOME_NAME_X, HOME_SCORING_X, flip)
+                        HOME_NAME_X, HOME_SCORING_X, HASH_SEP, HASH_LEN, flip)
 
 
 class DrawScorecard:
@@ -161,8 +161,8 @@ class DrawScorecard:
         self.draw_hash(1.5)
 
     def draw_hash(self, inning):
-        line = Line((ORIGIN_X + ATBAT_W + 20, self.y),
-                    (ORIGIN_X + ATBAT_W + 30, self.y))
+        line = Line((ORIGIN_X + ATBAT_W + HASH_SEP, self.y),
+                    (ORIGIN_X + ATBAT_W + HASH_SEP + HASH_LEN, self.y))
         if self.is_home_team_batting(inning):
             flip(line)
             self.home_hash_ys.append(self.y)
@@ -189,10 +189,10 @@ class DrawScorecard:
         for i, y in enumerate(y_array[:-1]):
             y_t = (y + y_array[i + 1]) / 2
             if flip:
-                x = ORIGIN_X + ATBAT_W + SEPARATION - 24
+                x = ORIGIN_X + ATBAT_W + SEPARATION - HASH_SEP - HASH_LEN / 2
                 pitcher_name = self.players[self.away_pitchers[i]]
             else:
-                x = ORIGIN_X + ATBAT_W + 24
+                x = ORIGIN_X + ATBAT_W + HASH_SEP + HASH_LEN / 2
                 pitcher_name = self.players[self.home_pitchers[i]]
             txt = Text(pitcher_name, x=[x], y=[y_t], text_anchor='middle',
                        alignment_baseline='middle')
