@@ -86,7 +86,7 @@ def get_scoring(ab):
                            'out')
 
     elif ab.event == 'Sac Fly':
-        g = re.search('sacrifice fly to ' + POS, ab.des)
+        g = re.search('sacrifice fly(?:,| to) ' + POS, ab.des)
         if g:
             return Scoring('F' + POSITIONS[g.group(1)], 'out')
         g = re.search('sacrifice fly. Fielding error by (\w+ fielder)', ab.des)
