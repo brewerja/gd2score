@@ -7,7 +7,7 @@ from .enhance import GameEnhancer
 
 GD2_URL = 'https://gd2.mlb.com/components/game/mlb'
 GID_REGEX = ('^gid_(?P<year>\d{4})_(?P<month>\d{2})_(?P<day>\d{2})_'
-             '[a-z]{3}mlb_[a-z]{3}mlb_\d$')
+             '[a-z]{6}_[a-z]{6}_\d$')
 
 
 class GameBuilder:
