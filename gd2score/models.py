@@ -1,5 +1,6 @@
 from collections import namedtuple
 import re
+import logging
 
 from .scoring import get_scoring
 
@@ -125,7 +126,10 @@ class AtBat:
         if runner.event_num < self.event_num:
             self.mid_pa_runners.append(runner)
         elif runner.event_num == self.event_num:
-            self.runners.append(runner)
+            if runner.id == 0 or runner.id not in [r.id for r in self.runners]:
+                self.runners.append(runner)
+            else: # Should not happen often!
+                logging.error('Duplicate runner')
         else:
             raise Exception('Runner bad ordering')
 

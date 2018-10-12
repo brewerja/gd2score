@@ -158,6 +158,9 @@ def get_scoring(ab):
         if g:  # 3/31/17
             return Scoring('D', 'on-base')
 
+        if ab.event == 'Single':
+            return Scoring('S', 'on-base')
+
     elif ab.event == 'Home Run':
         return Scoring('HR', 'on-base')
 
