@@ -13,7 +13,7 @@ rect {
     fill: none;
 }
 
-.team-box, .pitcher-hash {
+.team-box, .home-pitcher-hash, .away-pitcher-hash {
     stroke: gray;
     stroke-width: 0.4;
 }
