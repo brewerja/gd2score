@@ -94,7 +94,8 @@ class GameEnhancer:
             self.players[atbat.batter].last, atbat.des, throw=False)
 
         # Batter out trying to take an extra base
-        if batter_out_base and atbat.event in HITS_IN_PARK:
+        if batter_out_base and (atbat.event in HITS_IN_PARK or
+                                self.batter_gets_a_hit(atbat)):
             atbat.add_runner(
                 Runner(atbat.batter, 0, batter_out_base, atbat.event_num,
                        out=True))
@@ -117,6 +118,10 @@ class GameEnhancer:
                 logging.debug('Runner inserted: batter to 1st')
 
         self.strand_remaining_runners(atbat)
+
+    def batter_gets_a_hit(self, atbat):
+        name = self.players[atbat.batter].last
+        return re.search('%s (?:singles|doubles|triples)' % name, atbat.des)
 
     def set_runner_out_bases(self, atbat, throw=True):
         runners_to_adjust = [r for r in atbat.runners if not r.end]

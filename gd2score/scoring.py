@@ -120,9 +120,13 @@ def get_scoring(ab):
         g = re.search((AIR + " into a(?:n unassisted|\sfielder's choice)? " +
                        '(?:double|triple) play(?:\sin foul territory)?, ' +
                        POS), ab.des)
-        if g:  # 9/22/17 single on the play, causes parsing error
+        if g:
             return Scoring(AIR_TYPES[g.group(1)] + POSITIONS[g.group(2)],
                            'out')
+        # 9/10/2015 and 9/22/17 single on the play
+        g = re.search('Double play', ab.des)
+        if g:
+            return Scoring('DP', 'out')
 
     elif ab.event == 'Runner Out':
         if 'picked off and caught stealing' in ab.des:
