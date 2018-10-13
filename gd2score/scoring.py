@@ -68,7 +68,7 @@ def get_scoring(ab):
     elif ab.event == 'Catcher Interference':
         g = re.search('reaches on catcher interference', ab.des)
         if g:
-            return Scoring('CI', 'on-base')
+            return Scoring('CI', 'error')
 
     elif ab.event == 'Batter Interference':  # 4/1/2018, dp, weird
         return Scoring('BI', 'out')
