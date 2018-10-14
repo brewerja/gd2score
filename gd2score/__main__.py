@@ -1,10 +1,11 @@
+import re
 from datetime import datetime, timedelta
 import logging
 import urllib.request
 
 from bs4 import BeautifulSoup
 
-from .driver import GameBuilder, GD2_URL
+from .driver import GameBuilder, GD2_URL, GID_REGEX
 from .draw_scorecard import DrawScorecard
 from .parse_game import IncompleteGameException
 
@@ -20,6 +21,17 @@ def list_game_ids(year, month, day):
     soup = BeautifulSoup(html, 'html.parser')
     links = [a.get('href').split('/')[1] for a in soup.find_all('a')]
     return [l for l in links if l.startswith('gid')]
+
+
+def get_games(year, month, day):
+    games = {}
+    for gid in list_game_ids(year, month, day):
+        m = re.match(GID_REGEX, gid)
+        if m:
+            games[gid] = ('%s @ %s' %
+                          (m.group('away').upper(),
+                           m.group('home').upper()))
+    return games
 
 
 if __name__ == '__main__':
