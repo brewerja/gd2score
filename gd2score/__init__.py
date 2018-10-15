@@ -1,4 +1,4 @@
-from .driver import GameBuilder
+from .driver import GameBuilder, GID_REGEX
 from .draw_scorecard import DrawScorecard
 from .__main__ import get_games
 
