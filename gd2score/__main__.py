@@ -34,6 +34,13 @@ def get_games(year, month, day):
     return games
 
 
+def parse_gid_for_date(gid):
+    m = re.match(GID_REGEX, gid)
+    if m:
+        return int(m.group('year')), int(m.group('month')), int(m.group('day'))
+    raise ValueError
+
+
 if __name__ == '__main__':
     logging.basicConfig(  # filename='parsing.log',
                         format='%(levelname)s:%(message)s',
