@@ -9,7 +9,13 @@ BASES = ('1B', '2B', '3B')
 class GameParser:
     def parse(self, xml):
         game = Game()
-        for inning in ET.fromstring(xml):
+
+        game_root = ET.fromstring(xml)
+        ind = game_root.attrib['ind']
+        if ind == 'I':
+            game.in_progress = True
+
+        for inning in game_root:
             game.add_inning(self.parse_inning(inning))
         return game
 

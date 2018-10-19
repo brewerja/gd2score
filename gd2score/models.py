@@ -42,6 +42,7 @@ class Iter:
 
 class Game(Iter):
     def __init__(self):
+        self.in_progress = False
         self.innings = []
         Iter.__init__(self, self.innings)
 
