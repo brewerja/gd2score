@@ -19,9 +19,10 @@ class DrawScorecard:
         self.players = game.players
 
         self.dwg = Drawing(debug=True, profile='full')
+        self.dwg.add_stylesheet('static/style.css', 'styling')
 
         self.draw_team_boxes()
-        self.draw_inning_separators()
+        self.draw_inning_separators_and_numbers()
         self.draw_game()
         self.draw_pitcher_hash_marks()
         self.draw_pitcher_names()
@@ -42,7 +43,7 @@ class DrawScorecard:
     def draw_team_boxes(self):
         away_ht = sum(
             self.get_inning_height(inning) for inning in
-            self.game.innings) * ATBAT_HT
+            self.game.innings)
         away_team = self.get_team_box('away_team', away_ht)
 
         home_ht = away_ht
@@ -55,18 +56,29 @@ class DrawScorecard:
         self.dwg.add(away_team)
         self.dwg.add(home_team)
 
-    def draw_inning_separators(self):
+    def draw_inning_separators_and_numbers(self):
         y = ORIGIN_Y
         for i, inning in enumerate(self.game.innings[:-1]):
-            y += ATBAT_HT * self.get_inning_height(inning)
+            inning_ht = self.get_inning_height(inning)
+            y += inning_ht
             self.dwg.add(Line((ORIGIN_X, y), (ORIGIN_X + ATBAT_W, y),
                               class_='team-box'))
-            if (i == len(self.game.innings) - 2 and
-                    self.is_no_final_bottom()):
+            self.draw_inning_number(i + 1, y - inning_ht / 2)
+            if (i == len(self.game.innings) - 2 and self.is_no_final_bottom()):
                 break
             self.dwg.add(Line((ORIGIN_X + ATBAT_W + SEPARATION, y),
                               (ORIGIN_X + 2 * ATBAT_W + SEPARATION, y),
                               class_='team-box'))
+
+        inning_ht = self.get_inning_height(self.game.innings[-1])
+        self.draw_inning_number(len(self.game.innings), y + inning_ht / 2)
+
+    def draw_inning_number(self, num, y):
+        self.dwg.add(Text(num,
+                          x=[ORIGIN_X + ATBAT_W + SEPARATION / 2],
+                          y=[y],
+                          class_='inning-num', text_anchor='middle',
+                          dominant_baseline='middle'))
 
     def draw_game(self):
         self.y = ORIGIN_Y + ATBAT_HT
@@ -145,8 +157,7 @@ class DrawScorecard:
                         self.swap_pitcher(atbat.pitcher, half_inning.num)
                     self.y += ATBAT_HT
                 self.y = inning_start
-            self.y = (inning_start +
-                      ATBAT_HT * self.get_inning_height(inning))
+            self.y = (inning_start + self.get_inning_height(inning))
 
         self.draw_hash(1.0)
         if self.is_no_final_bottom():
@@ -154,7 +165,7 @@ class DrawScorecard:
         self.draw_hash(1.5)
 
     def get_inning_height(self, inning):
-        return max(len(h.atbats) for h in inning.halves)
+        return ATBAT_HT * max(len(h.atbats) for h in inning.halves)
 
     def draw_both_hashes(self):
         self.draw_hash(1.0)
