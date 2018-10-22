@@ -195,7 +195,7 @@ class DrawScorecard:
                 x = ORIGIN_X + ATBAT_W + HASH_SEP + HASH_LEN / 2
                 pitcher_name = self.players[self.home_pitchers[i]]
             txt = Text(pitcher_name, x=[x], y=[y_t], text_anchor='middle',
-                       alignment_baseline='middle')
+                       dominant_baseline='middle')
             if flip:
                 txt['id'] = 'away-pitcher-%02d' % i
                 txt['class'] = 'away-pitcher-name'
