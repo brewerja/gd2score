@@ -21,6 +21,7 @@ class GameBuilder:
         players = self.parse_players(game_url)
         game = self.parse_game(game_url)
         game.players = players
+        game.away, game.home = self.get_teams(game_id)
         self.game_enhancer.execute(game)
         return game
 
@@ -31,6 +32,10 @@ class GameBuilder:
     def parse_game(self, game_url):
         game_xml = self.get_url(game_url + 'inning/inning_all.xml')
         return self.game_parser.parse(game_xml)
+
+    def get_teams(self, gid):
+        g = re.match(GID_REGEX, gid)
+        return g.group('away'), g.group('home')
 
     def get_game_url(self, gid):
         g = re.match(GID_REGEX, gid)

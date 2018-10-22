@@ -1,4 +1,4 @@
-ORIGIN_X, ORIGIN_Y = 10, 10
+ORIGIN_X, ORIGIN_Y = 10, 50
 ATBAT_W, ATBAT_HT = 210, 20
 NAME_W = 100
 TEXT_HOP = 5
@@ -23,3 +23,18 @@ HASH_LEN = 10
 def flip(graphic):
     graphic.translate(SEPARATION + 2 * (ORIGIN_X + ATBAT_W), 0)
     graphic.scale(-1, 1)
+
+
+LOGOS = {  # Those that differ
+         'cha': 'cws',
+         'chn': 'chc',
+         'flo': 'fla',
+         'kca': 'kc',
+         'lan': 'la',
+         'nya': 'nyy',
+         'nyn': 'nym',
+         'sfn': 'sf',
+         'sln': 'stl',
+         'sdn': 'sd',
+         'tba': 'tb',
+         }

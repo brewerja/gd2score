@@ -2,12 +2,14 @@ from svgwrite import Drawing
 from svgwrite.shapes import Line, Rect
 from svgwrite.text import Text
 from svgwrite.container import Group
+from svgwrite.image import Image
 
 from .draw_runners import DrawRunners
 from .constants import (ORIGIN_X, ORIGIN_Y, ATBAT_W, ATBAT_HT, NAME_W,
                         TEXT_HOP, SCORE_W, SEPARATION,
                         AWAY_NAME_X, AWAY_SCORING_X,
-                        HOME_NAME_X, HOME_SCORING_X, HASH_SEP, HASH_LEN, flip)
+                        HOME_NAME_X, HOME_SCORING_X, HASH_SEP, HASH_LEN, flip,
+                        LOGOS)
 
 
 class DrawScorecard:
@@ -19,15 +21,41 @@ class DrawScorecard:
         self.players = game.players
 
         self.dwg = Drawing(debug=True, profile='full')
-        self.dwg.add_stylesheet('static/style.css', 'styling')
 
         self.draw_team_boxes()
         self.draw_inning_separators_and_numbers()
         self.draw_game()
         self.draw_pitcher_hash_marks()
         self.draw_pitcher_names()
+        self.draw_score()
+        self.draw_logos()
 
         return self.dwg
+
+    def draw_logos(self):
+        away = LOGOS.get(self.game.away, self.game.away)
+        self.dwg.add(Image(f'http://mlb.mlb.com/images/logos/80x80/{away}.png',
+                           (ORIGIN_X, ORIGIN_Y - 50), (40, 40)))
+        home = LOGOS.get(self.game.home, self.game.home)
+        self.dwg.add(Image(f'http://mlb.mlb.com/images/logos/80x80/{home}.png',
+                           (ORIGIN_X + ATBAT_W + SEPARATION + ATBAT_W - 40,
+                            ORIGIN_Y - 50), (40, 40)))
+
+    def draw_score(self):
+        away_score = 0
+        home_score = 0
+        for inning in self.game:
+            for half_inning in inning:
+                for atbat in half_inning:
+                    away_score = atbat.away_score
+                    home_score = atbat.home_score
+        self.dwg.add(Text(away_score,
+                          x=[ORIGIN_X + ATBAT_W], y=[ORIGIN_Y - ATBAT_HT],
+                          class_='score', text_anchor='end'))
+        self.dwg.add(Text(home_score,
+                          x=[ORIGIN_X + ATBAT_W + SEPARATION],
+                          y=[ORIGIN_Y - ATBAT_HT], class_='score',
+                          text_anchor='start'))
 
     def get_team_box(self, id, ht):
         box = Group()
@@ -74,9 +102,7 @@ class DrawScorecard:
         self.draw_inning_number(len(self.game.innings), y + inning_ht / 2)
 
     def draw_inning_number(self, num, y):
-        self.dwg.add(Text(num,
-                          x=[ORIGIN_X + ATBAT_W + SEPARATION / 2],
-                          y=[y],
+        self.dwg.add(Text(num, x=[ORIGIN_X + ATBAT_W + SEPARATION / 2], y=[y],
                           class_='inning-num', text_anchor='middle',
                           dominant_baseline='middle'))
 
