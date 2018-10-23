@@ -37,4 +37,6 @@ LOGOS = {  # Those that differ
          'sln': 'stl',
          'sdn': 'sd',
          'tba': 'tb',
+         'aas': 'al',
+         'nas': 'nl',
          }
