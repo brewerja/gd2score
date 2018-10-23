@@ -13,6 +13,10 @@ rect {
     fill: none;
 }
 
+rect.inning-fill {
+    fill: #F5F5F5;
+}
+
 .team-box, .home-pitcher-hash, .away-pitcher-hash {
     stroke: gray;
     stroke-width: 0.4;
@@ -21,6 +25,10 @@ rect {
 text {
     font-family: Arial;
     font-size: 10pt;
+}
+
+text.score {
+    font-size: 20pt;
 }
 
 text.out {
