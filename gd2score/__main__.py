@@ -7,7 +7,6 @@ from bs4 import BeautifulSoup
 
 from .driver import GameBuilder, GD2_URL, GID_REGEX
 from .draw_scorecard import DrawScorecard
-from .parse_game import IncompleteGameException
 
 
 def get(url):
@@ -44,11 +43,11 @@ def parse_gid_for_date(gid):
 if __name__ == '__main__':
     logging.basicConfig(  # filename='parsing.log',
                         format='%(levelname)s:%(message)s',
-                        level=logging.DEBUG)
+                        level=logging.INFO)
 
     game_builder = GameBuilder()
     draw_scorecard = DrawScorecard()
-    start_date = datetime(2016, 5, 20)
+    start_date = datetime(2018, 10, 2)
     for date in [start_date + timedelta(days=x) for x in range(0, 200)]:
         game_ids = list_game_ids(date.year, date.month, date.day)
         for game_id in game_ids:
@@ -65,5 +64,3 @@ if __name__ == '__main__':
                 input(game_id)
             except urllib.error.HTTPError:
                 logging.info('Not found: %s', game_id)
-            except IncompleteGameException:
-                logging.info('Incomplete game: %s', game_id)
