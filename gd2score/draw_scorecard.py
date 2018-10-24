@@ -23,7 +23,9 @@ class DrawScorecard:
 
         self.dwg = Drawing(debug=True, profile='full')
 
-        self.draw_inning_separators_and_numbers()
+        self.draw_inning_stripes()
+        self.draw_inning_separators()
+        self.draw_inning_numbers()
         self.draw_team_boxes()
         self.draw_game()
         self.draw_pitcher_hash_marks()
@@ -85,31 +87,43 @@ class DrawScorecard:
         self.dwg.add(away_team)
         self.dwg.add(home_team)
 
-    def draw_inning_separators_and_numbers(self):
+    def draw_inning_stripes(self):
         y = ORIGIN_Y
         for i, inning in enumerate(self.game.innings):
             inning_ht = self.get_inning_height(inning)
             y += inning_ht
-            if i % 2:
+            if not i % 2:
                 self.dwg.add(Rect((ORIGIN_X, y - inning_ht),
                                   (ATBAT_W, inning_ht),
                              class_='inning-fill'))
-            if i != len(self.game.innings) - 1:
-                self.dwg.add(Line((ORIGIN_X, y), (ORIGIN_X + ATBAT_W, y),
-                                  class_='team-box'))
 
-            self.draw_inning_number(i + 1, y - inning_ht / 2)
+            if (not (i == len(self.game.innings) - 1 and
+                     self.is_no_final_bottom())):
+                if not i % 2:
+                    self.dwg.add(Rect((ORIGIN_X + ATBAT_W + SEPARATION,
+                                       y - inning_ht), (ATBAT_W, inning_ht),
+                                 class_='inning-fill'))
 
-            if i % 2:
-                self.dwg.add(Rect((ORIGIN_X + ATBAT_W + SEPARATION,
-                                   y - inning_ht), (ATBAT_W, inning_ht),
-                             class_='inning-fill'))
-            if (i == len(self.game.innings) - 2 and self.is_no_final_bottom()):
-                break
-            if i != len(self.game.innings) - 1:
+    def draw_inning_separators(self):
+        y = ORIGIN_Y
+        for i, inning in enumerate(self.game.innings[:-1]):
+            inning_ht = self.get_inning_height(inning)
+            y += inning_ht
+            self.dwg.add(Line((ORIGIN_X, y), (ORIGIN_X + ATBAT_W, y),
+                              class_='team-box'))
+
+            if (not (i == len(self.game.innings) - 2 and
+                     self.is_no_final_bottom())):
                 self.dwg.add(Line((ORIGIN_X + ATBAT_W + SEPARATION, y),
                                   (ORIGIN_X + 2 * ATBAT_W + SEPARATION, y),
                                   class_='team-box'))
+
+    def draw_inning_numbers(self):
+        y = ORIGIN_Y
+        for i, inning in enumerate(self.game.innings):
+            inning_ht = self.get_inning_height(inning)
+            y += inning_ht
+            self.draw_inning_number(i + 1, y - inning_ht / 2)
 
     def draw_inning_number(self, num, y):
         self.dwg.add(Text(num, x=[ORIGIN_X + ATBAT_W + SEPARATION / 2], y=[y],
