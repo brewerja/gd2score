@@ -26,9 +26,6 @@ class GameParser:
         return active_inning
 
     def parse_half_inning(self, half_inning):
-        if len(half_inning) == 0:
-            raise IncompleteGameException()
-
         half = HalfInning()
         for event in half_inning:
             if event.tag == 'atbat':
@@ -88,7 +85,3 @@ class GameParser:
             return int(base[0])
         else:
             raise Exception('Could not parse base: %s' % base)
-
-
-class IncompleteGameException(Exception):
-    pass
