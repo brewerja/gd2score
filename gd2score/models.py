@@ -17,6 +17,15 @@ class Runner:
         self.to_score = False
 
     def __str__(self):
+        retval = '       ' + ' '.join([str(x) for x in [self.id, self.start,
+                                                       '->', self.end]])
+        if self.out:
+            retval += ' out!'
+        elif self.to_score and self.end == 4:
+            retval += ' scores!'
+        elif self.to_score:
+            retval += ' will score'
+        return retval
         return str(self.__dict__)
 
     def __repr__(self):
@@ -86,6 +95,10 @@ class HalfInning(Iter):
     def add_action(self, action):
         self.action_buffer.append(action)
 
+    def __str__(self):
+        if self.num % 1.0:
+            return '  Bottom %d' % (self.num)
+        return '  Top %d' % (self.num)
 
 class AtBat:
     def __init__(self, pa_num, event_num, batter, des, event, pitcher,
@@ -139,6 +152,16 @@ class AtBat:
         if self.des not in descriptions:
             descriptions.append(self.des)
         return '\n'.join(descriptions)
+
+    def __str__(self):
+        retval = '    ' + ' '.join(
+            [str(x) for x in [self.pa_num, self.batter, self.pitcher,
+                              self.outs, self.scoring.code]])
+        if self.scoring.result == 'on-base':
+            retval += ' ' + self.event
+        elif self.scoring.result == 'error':
+            retval += ' (error)'
+        return retval
 
 
 class Player:

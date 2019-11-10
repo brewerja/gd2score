@@ -61,6 +61,16 @@ if __name__ == '__main__':
                 drawing = draw_scorecard.draw(game)
                 drawing.saveas('test.svg')
 
+                for inning in game:
+                    print(inning)
+                    for half in inning:
+                        print(half)
+                        for atbat in half:
+                            print(atbat)
+                            for runner in atbat.mid_pa_runners:
+                                print(runner)
+                            for runner in atbat.runners:
+                                print(runner)
                 input(game_id)
             except urllib.error.HTTPError:
                 logging.info('Not found: %s', game_id)
