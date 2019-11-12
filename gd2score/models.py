@@ -136,6 +136,12 @@ class AtBat:
                 return action
         raise KeyError
 
+    def add_mid_pa_runner(self, runner):
+        self.mid_pa_runners.append(runner)
+
+    def add_atbat_runner(self, runner):
+        self.runners.append(runner)
+
     def add_runner(self, runner):
         if runner.event_num < self.event_num:
             self.mid_pa_runners.append(runner)

@@ -68,9 +68,12 @@ if __name__ == '__main__':
                         for atbat in half:
                             print(atbat)
                             for runner in atbat.mid_pa_runners:
-                                print(runner)
+                                print(runner, 'mid-pa')
                             for runner in atbat.runners:
                                 print(runner)
-                input(game_id)
+                            #input()
+                #input(game_id)
+                break
             except urllib.error.HTTPError:
                 logging.info('Not found: %s', game_id)
+        break
