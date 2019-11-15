@@ -1,43 +1,12 @@
 import re
 from datetime import datetime, timedelta
 import logging
-import urllib.request
 
-from bs4 import BeautifulSoup
+import statsapi
 
-from .driver import GameBuilder, GD2_URL, GID_REGEX
+from .parse_game import GameParser
+from .enhance import GameEnhancer
 from .draw_scorecard import DrawScorecard
-
-
-def get(url):
-    with urllib.request.urlopen(url) as response:
-        return response.read()
-
-
-def list_game_ids(year, month, day):
-    html = get('%s/year_%04d/month_%02d/day_%02d' %
-               (GD2_URL, year, month, day))
-    soup = BeautifulSoup(html, 'html.parser')
-    links = [a.get('href').split('/')[1] for a in soup.find_all('a')]
-    return [l for l in links if l.startswith('gid')]
-
-
-def get_games(year, month, day):
-    games = {}
-    for gid in list_game_ids(year, month, day):
-        m = re.match(GID_REGEX, gid)
-        if m:
-            games[gid] = ('%s @ %s' %
-                          (m.group('away').upper(),
-                           m.group('home').upper()))
-    return games
-
-
-def parse_gid_for_date(gid):
-    m = re.match(GID_REGEX, gid)
-    if m:
-        return int(m.group('year')), int(m.group('month')), int(m.group('day'))
-    raise ValueError
 
 
 if __name__ == '__main__':
@@ -45,35 +14,32 @@ if __name__ == '__main__':
                         format='%(levelname)s:%(message)s',
                         level=logging.INFO)
 
-    game_builder = GameBuilder()
+    game_parser = GameParser()
+    game_enhancer = GameEnhancer()
     draw_scorecard = DrawScorecard()
-    start_date = datetime(2018, 10, 2)
-    for date in [start_date + timedelta(days=x) for x in range(0, 200)]:
-        game_ids = list_game_ids(date.year, date.month, date.day)
-        for game_id in game_ids:
-            if game_id in ['gid_2014_04_16_atlmlb_phimlb_1',
-                           'gid_2014_05_23_arimlb_nynmlb_1',
-                           'gid_2014_08_12_arimlb_clemlb_1']:
-                continue
-            try:
-                logging.info('Processing %s', game_id)
-                game = game_builder.build(game_id)
-                drawing = draw_scorecard.draw(game)
-                drawing.saveas('test.svg')
 
-                for inning in game:
-                    print(inning)
-                    for half in inning:
-                        print(half)
-                        for atbat in half:
-                            print(atbat)
-                            for runner in atbat.mid_pa_runners:
-                                print(runner, 'mid-pa')
-                            for runner in atbat.runners:
-                                print(runner)
-                            #input()
-                #input(game_id)
-                break
-            except urllib.error.HTTPError:
-                logging.info('Not found: %s', game_id)
-        break
+    start_date = datetime(2018, 10, 5)
+    for date in [start_date + timedelta(days=x) for x in range(0, 200)]:
+        games = statsapi.schedule(
+            start_date='%d/%d/%d' % (date.month, date.day, date.year))
+
+        for game_dict in games:
+            logging.info('Processing %d %s %s vs. %s', game_dict['game_id'],
+                         game_dict['game_date'], game_dict['away_name'],
+                         game_dict['home_name'])
+            game = game_parser.parse(game_dict)
+            game_enhancer.execute(game)
+            drawing = draw_scorecard.draw(game)
+            drawing.saveas('test.svg')
+
+            #for inning in game:
+            #    print(inning)
+            #    for half in inning:
+            #        print(half)
+            #        for atbat in half:
+            #            print(atbat)
+            #            for runner in atbat.mid_pa_runners:
+            #                print(runner, 'mid-pa')
+            #            for runner in atbat.runners:
+            #                print(runner)
+            #input('Done')

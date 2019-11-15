@@ -34,7 +34,7 @@ class GameParser:
                        int(play['atBatIndex'] + 1),
                        int(play['matchup']['batter']['id']),
                        play['result']['description'],
-                       play['result']['event'],
+                       play['result']['eventType'],
                        int(play['matchup']['pitcher']['id']),
                        int(play['count']['outs']),
                        int(play['result']['homeScore']),
@@ -90,24 +90,3 @@ class GameParser:
     def get_team_code(self, team_id):
         team = statsapi.get('team', {'teamId': team_id})['teams'][0]
         return team['teamCode']
-
-
-if __name__ == '__main__':
-    games = statsapi.schedule(start_date='10/26/2018')
-    game_dict = games[0]
-
-    game = GameParser().parse(game_dict)
-    GameEnhancer().execute(game)
-    drawing = DrawScorecard().draw(game)
-    drawing.saveas('test.svg')
-
-    for inning in game:
-        print(inning)
-        for half in inning:
-            print(half)
-            for atbat in half:
-                print(atbat)
-                for runner in atbat.mid_pa_runners:
-                    print(runner, 'mid-pa')
-                for runner in atbat.runners:
-                    print(runner)
