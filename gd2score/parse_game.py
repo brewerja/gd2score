@@ -1,24 +1,14 @@
-import statsapi
-
 from .models import Game, Inning, HalfInning, Action, AtBat, Runner, Player
-from .enhance import GameEnhancer
-from .draw_scorecard import DrawScorecard
 
 
 class GameParser:
-    def parse(self, game_dict):
-        game_id = game_dict['game_id']
-
+    def parse(self, pbp):
         game = Game()
-        # Used later for logo lookups
-        game.away = self.get_team_code(game_dict['away_id'])
-        game.home = self.get_team_code(game_dict['home_id'])
 
         active_inning = None
         active_half = None
         top_bottom = 'top'
 
-        pbp = statsapi.get('game_playByPlay', {'gamePk': game_id})
         for play in pbp['allPlays']:
             inning_num = int(play['about']['inning'])
             if not active_inning or active_inning.num != inning_num:
@@ -67,7 +57,7 @@ class GameParser:
                         if end > ab_runner.end:
                             ab_runner.end = end  # Increase end
                         if start < ab_runner.start:
-                            ab_runner.start = start # Decrease start
+                            ab_runner.start = start  # Decrease start
                         ab_runner.out = mvmt['isOut']
                         already_added = True
                         break
@@ -88,7 +78,3 @@ class GameParser:
             return 4
         else:
             return int(base[0])
-
-    def get_team_code(self, team_id):
-        team = statsapi.get('team', {'teamId': team_id})['teams'][0]
-        return team['teamCode']

@@ -4,8 +4,7 @@ import logging
 
 import statsapi
 
-from .parse_game import GameParser
-from .enhance import GameEnhancer
+from .build_game import GameBuilder
 from .draw_scorecard import DrawScorecard
 
 
@@ -14,8 +13,7 @@ if __name__ == '__main__':
                         format='%(levelname)s:%(message)s',
                         level=logging.INFO)
 
-    game_parser = GameParser()
-    game_enhancer = GameEnhancer()
+    game_builder = GameBuilder()
     draw_scorecard = DrawScorecard()
 
     start_date = datetime(2018, 10, 5)
@@ -27,8 +25,7 @@ if __name__ == '__main__':
             logging.info('Processing %d %s %s vs. %s', game_dict['game_id'],
                          game_dict['game_date'], game_dict['away_name'],
                          game_dict['home_name'])
-            game = game_parser.parse(game_dict)
-            game_enhancer.execute(game)
+            game = game_builder.build(game_dict)
             drawing = draw_scorecard.draw(game)
             drawing.saveas('test.svg')
 
