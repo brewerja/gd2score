@@ -30,8 +30,8 @@ class GameParser:
                 active_half = HalfInning()
                 active_inning.add_half(active_half)
 
-            ab = AtBat(int(play['atBatIndex'] + 1),
-                       int(play['atBatIndex'] + 1),
+            ab = AtBat(int(play['atBatIndex']),
+                       int(play['atBatIndex']),
                        int(play['matchup']['batter']['id']),
                        play['result']['description'],
                        play['result']['eventType'],
@@ -64,14 +64,16 @@ class GameParser:
             for ab_runner in ab.runners:
                 if (ab_runner.id == runner_id and
                     ab_runner.event_num == play_index):
-                        assert end > ab_runner.end
-                        ab_runner.end = end  # Increase end
+                        if end > ab_runner.end:
+                            ab_runner.end = end  # Increase end
+                        if start < ab_runner.start:
+                            ab_runner.start = start # Decrease start
+                        ab_runner.out = mvmt['isOut']
                         already_added = True
                         break
 
             if not already_added:
                 r = Runner(runner_id, start, end, play_index)
-                r.to_score = runner['details']['isScoringEvent']
                 r.out = mvmt['isOut']
 
                 if i in runner_index:
