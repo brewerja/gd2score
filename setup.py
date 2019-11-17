@@ -15,7 +15,7 @@ setuptools.setup(
     url='https://github.com/brewerja/gd2score',
     keywords='baseball mlb',
     packages=setuptools.find_packages(exclude=['tests']),
-    install_requires=['svgwrite', 'beautifulsoup4', 'fuzzywuzzy'],
+    install_requires=['svgwrite'],
     classifiers=[
         'Programming Language :: Python :: 3',
         'License :: OSI Approved :: GNU General Public License v3.0'
