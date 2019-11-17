@@ -8,8 +8,7 @@ from .draw_runners import DrawRunners
 from .constants import (ORIGIN_X, ORIGIN_Y, ATBAT_W, ATBAT_HT, NAME_W,
                         TEXT_HOP, SCORE_W, SEPARATION,
                         AWAY_NAME_X, AWAY_SCORING_X,
-                        HOME_NAME_X, HOME_SCORING_X, HASH_SEP, HASH_LEN, flip,
-                        LOGOS)
+                        HOME_NAME_X, HOME_SCORING_X, HASH_SEP, HASH_LEN, flip)
 LOGO_URL = 'http://mlb.mlb.com/images/logos/80x80/'
 
 
@@ -36,11 +35,9 @@ class DrawScorecard:
         return self.dwg
 
     def draw_logos(self):
-        away = LOGOS.get(self.game.away, self.game.away)
-        self.dwg.add(Image(LOGO_URL + f'{away}.png',
+        self.dwg.add(Image(LOGO_URL + f'{self.game.away}.png',
                            (ORIGIN_X, ORIGIN_Y - 50), (40, 40)))
-        home = LOGOS.get(self.game.home, self.game.home)
-        self.dwg.add(Image(LOGO_URL + f'{home}.png',
+        self.dwg.add(Image(LOGO_URL + f'{self.game.home}.png',
                            (ORIGIN_X + ATBAT_W + SEPARATION + ATBAT_W - 40,
                             ORIGIN_Y - 50), (40, 40)))
 

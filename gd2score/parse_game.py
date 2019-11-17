@@ -2,14 +2,14 @@ from .models import Game, Inning, HalfInning, Action, AtBat, Runner, Player
 
 
 class GameParser:
-    def parse(self, pbp):
+    def parse(self, plays):
         game = Game()
 
         active_inning = None
         active_half = None
         top_bottom = 'top'
 
-        for play in pbp['allPlays']:
+        for play in plays:
             inning_num = int(play['about']['inning'])
             if not active_inning or active_inning.num != inning_num:
                 active_inning = Inning(inning_num)

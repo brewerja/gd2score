@@ -11,14 +11,10 @@ class GameBuilder:
 
     def build(self, game_dict):
         game_id = game_dict['game_id']
-        pbp = statsapi.get('game_playByPlay', {'gamePk': game_id})
-        game = self.game_parser.parse(pbp)
-        # Used later for logo lookups
-        game.away = self.get_team_code(game_dict['away_id'])
-        game.home = self.get_team_code(game_dict['home_id'])
+        feed = statsapi.get('game', {'gamePk': game_id})
+        plays = feed['liveData']['plays']['allPlays']
+        game = self.game_parser.parse(plays)
+        game.away = feed['gameData']['teams']['away']['fileCode']
+        game.home = feed['gameData']['teams']['home']['fileCode']
         self.game_enhancer.execute(game)
         return game
-
-    def get_team_code(self, team_id):
-        team = statsapi.get('team', {'teamId': team_id})['teams'][0]
-        return team['teamCode']
