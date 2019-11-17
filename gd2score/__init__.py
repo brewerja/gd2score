@@ -1,3 +1,4 @@
 from .draw_scorecard import DrawScorecard
+from .build_game import GameBuilder
 
-__all__ = ['draw_scorecard']
+__all__ = ['build_game', 'draw_scorecard']
