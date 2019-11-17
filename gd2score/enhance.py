@@ -13,7 +13,7 @@ class GameEnhancer:
 
     def execute(self, game):
         self.players = {}
-        self.players[0] = Player(0, 'Held', 'Runner')
+        self.players[0] = Player(0, 'Held Runner')
 
         for inning in game:
             for half_inning in inning:
@@ -42,9 +42,8 @@ class GameEnhancer:
         if id not in self.players:
             response = statsapi.get('person', {'personId': id})
             # name = response['people'][0]['initLastName']
-            first = response['people'][0]['useName']
-            last = response['people'][0]['boxscoreName']
-            self.players[id] = Player(id, first, last)
+            name = response['people'][0]['initLastName']
+            self.players[id] = Player(id, name)
 
     def hold_runners(self, active_runners, atbat):
         """The schema only represents runner movement. We need a record in each

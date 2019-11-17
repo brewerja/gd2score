@@ -1,4 +1,4 @@
-from .models import Game, Inning, HalfInning, Action, AtBat, Runner, Player
+from .models import Game, Inning, HalfInning, Action, AtBat, Runner
 
 
 class GameParser:
