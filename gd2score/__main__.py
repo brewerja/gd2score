@@ -25,7 +25,7 @@ if __name__ == '__main__':
             logging.info('Processing %d %s %s vs. %s', game_dict['game_id'],
                          game_dict['game_date'], game_dict['away_name'],
                          game_dict['home_name'])
-            game = game_builder.build(game_dict)
+            game = game_builder.build(game_dict['game_id'])
             drawing = draw_scorecard.draw(game)
             drawing.saveas('test.svg')
 
