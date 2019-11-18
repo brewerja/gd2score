@@ -3,7 +3,7 @@ import logging
 
 import statsapi
 
-from .models import Runner, Player
+from .models import Runner
 from .runner_highlighter import RunnerHighlighter
 
 
@@ -12,15 +12,10 @@ class GameEnhancer:
         self.runner_highlighter = RunnerHighlighter()
 
     def execute(self, game):
-        self.players = {}
-        self.players[0] = Player(0, 'Held Runner')
-
         for inning in game:
             for half_inning in inning:
                 self.fix_half_inning(half_inning)
                 self.runner_highlighter.highlight(half_inning)
-
-        game.players = self.players
 
     def fix_half_inning(self, half_inning):
         """Adds missing runner tags, and resolves the ending bases of runners
@@ -28,21 +23,11 @@ class GameEnhancer:
         outs = 0
         active_runners = []
         for atbat in half_inning:
-            self.parse_player(atbat.batter)
-            self.parse_player(atbat.pitcher)
-
             self.hold_runners(active_runners, atbat)
 
             active_runners = [r for r in atbat.runners
                               if not r.out and r.end != 4]
             outs = atbat.outs
-
-    def parse_player(self, id):
-        """Looks up name information for player id, adds to cache"""
-        if id not in self.players:
-            response = statsapi.get('person', {'personId': id})
-            name = response['people'][0]['initLastName']
-            self.players[id] = Player(id, name)
 
     def hold_runners(self, active_runners, atbat):
         """The schema only represents runner movement. We need a record in each
