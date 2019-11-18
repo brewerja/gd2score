@@ -4,8 +4,6 @@ import logging
 
 from .scoring import get_scoring
 
-Action = namedtuple('Action', 'event_num event des player')
-
 
 class Runner:
     def __init__(self, id, start, end, event_num, out=False):
@@ -18,7 +16,7 @@ class Runner:
 
     def __str__(self):
         retval = '       ' + ' '.join([str(x) for x in [self.id, self.start,
-                                                       '->', self.end]])
+                                                        '->', self.end]])
         if self.out:
             retval += ' out!'
         elif self.to_score and self.end == 4:
@@ -99,6 +97,7 @@ class HalfInning(Iter):
         if self.num % 1.0:
             return '  Bottom %d' % (self.num)
         return '  Top %d' % (self.num)
+
 
 class AtBat:
     def __init__(self, pa_num, event_num, batter, des, event, pitcher,

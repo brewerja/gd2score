@@ -1,4 +1,4 @@
-from .models import Game, Inning, HalfInning, Action, AtBat, Runner
+from .models import Game, Inning, HalfInning, AtBat, Runner
 
 
 class GameParser:
@@ -23,7 +23,7 @@ class GameParser:
             ab = AtBat(int(play['atBatIndex']),
                        int(play['atBatIndex']),
                        int(play['matchup']['batter']['id']),
-                       play['result']['description'],
+                       self.build_description(play),
                        play['result']['eventType'],
                        int(play['matchup']['pitcher']['id']),
                        int(play['count']['outs']),
@@ -34,6 +34,16 @@ class GameParser:
             active_half.add_atbat(ab)
 
         return game
+
+    def build_description(self, play):
+        descriptions = []
+        action_index = set(play['actionIndex'])
+        if action_index:
+            for i, event in enumerate(play['playEvents']):
+                if i in action_index:
+                    descriptions.append(event['details']['description'])
+        descriptions.append(play['result']['description'])
+        return ' '.join(descriptions)
 
     def parse_runners(self, ab, play):
         runner_index = set(play['runnerIndex'])

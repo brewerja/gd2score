@@ -41,7 +41,6 @@ class GameEnhancer:
         """Looks up name information for player id, adds to cache"""
         if id not in self.players:
             response = statsapi.get('person', {'personId': id})
-            # name = response['people'][0]['initLastName']
             name = response['people'][0]['initLastName']
             self.players[id] = Player(id, name)
 
