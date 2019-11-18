@@ -4,8 +4,6 @@ import logging
 
 from .scoring import get_scoring
 
-Action = namedtuple('Action', 'event_num event des player')
-
 
 class Runner:
     def __init__(self, id, start, end, event_num, out=False):
@@ -17,6 +15,15 @@ class Runner:
         self.to_score = False
 
     def __str__(self):
+        retval = '       ' + ' '.join([str(x) for x in [self.id, self.start,
+                                                        '->', self.end]])
+        if self.out:
+            retval += ' out!'
+        elif self.to_score and self.end == 4:
+            retval += ' scores!'
+        elif self.to_score:
+            retval += ' will score'
+        return retval
         return str(self.__dict__)
 
     def __repr__(self):
@@ -86,6 +93,11 @@ class HalfInning(Iter):
     def add_action(self, action):
         self.action_buffer.append(action)
 
+    def __str__(self):
+        if self.num % 1.0:
+            return '  Bottom %d' % (self.num)
+        return '  Top %d' % (self.num)
+
 
 class AtBat:
     def __init__(self, pa_num, event_num, batter, des, event, pitcher,
@@ -123,6 +135,12 @@ class AtBat:
                 return action
         raise KeyError
 
+    def add_mid_pa_runner(self, runner):
+        self.mid_pa_runners.append(runner)
+
+    def add_atbat_runner(self, runner):
+        self.runners.append(runner)
+
     def add_runner(self, runner):
         if runner.event_num < self.event_num:
             self.mid_pa_runners.append(runner)
@@ -140,23 +158,24 @@ class AtBat:
             descriptions.append(self.des)
         return '\n'.join(descriptions)
 
+    def __str__(self):
+        retval = '    ' + ' '.join(
+            [str(x) for x in [self.pa_num, self.batter, self.pitcher,
+                              self.outs, self.scoring.code]])
+        if self.scoring.result == 'on-base':
+            retval += ' ' + self.event
+        elif self.scoring.result == 'error':
+            retval += ' (error)'
+        return retval
+
 
 class Player:
-    def __init__(self, id, first, last):
+    def __init__(self, id, name):
         self.id = id
-        if re.match('[A-Z]\.\s?[A-Z]\.\s*', first):
-            # 'A.J.' --> 'A. J.'
-            self.first = '%s %s' % (first[:2], first[2:])
-        else:
-            self.first = first
-        self.last = last
-
-    def full_name(self):
-        return ' '.join((self.first, self.last))
+        self.name = name
 
     def __str__(self):
-        uppers = ['%s.' % c for c in self.first if c.isupper()]
-        return '%s %s' % (' '.join(uppers), self.last)
+        return self.name
 
     def __repr__(self):
         return self.__str__()

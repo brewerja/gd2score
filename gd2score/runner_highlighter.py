@@ -14,8 +14,7 @@ class RunnerHighlighter:
                 self.mark_and_save(runner)
 
     def parse_mid_pa_runners(self, atbat):
-        for runner in sorted(atbat.mid_pa_runners,
-                             key=lambda r: r.event_num, reverse=True):
+        for runner in reversed(atbat.mid_pa_runners):
             if runner.end in self.bases_new and not runner.out:
                 self.bases_new.remove(runner.end)
                 self.mark_and_save(runner)

@@ -7,7 +7,5 @@ name = "pypi"
 
 [packages]
 
-fuzzywuzzy = "*"
-"beautifulsoup4" = "*"
 svgwrite = "*"
-"python-levenshtein" = "*"
+mlb-statsapi = "*"

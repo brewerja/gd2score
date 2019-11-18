@@ -23,20 +23,3 @@ HASH_LEN = 10
 def flip(graphic):
     graphic.translate(SEPARATION + 2 * (ORIGIN_X + ATBAT_W), 0)
     graphic.scale(-1, 1)
-
-
-LOGOS = {  # Those that differ
-         'cha': 'cws',
-         'chn': 'chc',
-         'flo': 'fla',
-         'kca': 'kc',
-         'lan': 'la',
-         'nya': 'nyy',
-         'nyn': 'nym',
-         'sfn': 'sf',
-         'sln': 'stl',
-         'sdn': 'sd',
-         'tba': 'tb',
-         'aas': 'al',
-         'nas': 'nl',
-         }
