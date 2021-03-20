@@ -4,12 +4,12 @@ from svgwrite.text import Text
 from svgwrite.container import Group
 from svgwrite.image import Image
 
+from .logo_lookup import get_logo
 from .draw_runners import DrawRunners
 from .constants import (ORIGIN_X, ORIGIN_Y, ATBAT_W, ATBAT_HT, NAME_W,
                         TEXT_HOP, SCORE_W, SEPARATION,
                         AWAY_NAME_X, AWAY_SCORING_X,
                         HOME_NAME_X, HOME_SCORING_X, HASH_SEP, HASH_LEN, flip)
-LOGO_URL = 'http://mlb.mlb.com/images/logos/80x80/'
 
 
 class DrawScorecard:
@@ -35,9 +35,9 @@ class DrawScorecard:
         return self.dwg
 
     def draw_logos(self):
-        self.dwg.add(Image(LOGO_URL + f'{self.game.away}.png',
+        self.dwg.add(Image(get_logo(self.game.away),
                            (ORIGIN_X, ORIGIN_Y - 50), (40, 40)))
-        self.dwg.add(Image(LOGO_URL + f'{self.game.home}.png',
+        self.dwg.add(Image(get_logo(self.game.home),
                            (ORIGIN_X + ATBAT_W + SEPARATION + ATBAT_W - 40,
                             ORIGIN_Y - 50), (40, 40)))
 
