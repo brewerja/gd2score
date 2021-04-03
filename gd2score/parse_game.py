@@ -42,7 +42,7 @@ class GameParser:
             for i, event in enumerate(play['playEvents']):
                 if i in action_index:
                     descriptions.append(event['details']['description'])
-        descriptions.append(play['result']['description'])
+        descriptions.append(play['result'].get('description', ''))
         return ' '.join(descriptions)
 
     def parse_runners(self, ab, play):
