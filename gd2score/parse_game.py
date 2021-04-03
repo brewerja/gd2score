@@ -46,6 +46,7 @@ class GameParser:
         return ' '.join(descriptions)
 
     def parse_runners(self, ab, play):
+        num_events = len(play['playEvents'])
         runner_index = set(play['runnerIndex'])
         for i, runner in enumerate(play['runners']):
             mvmt = runner['movement']
@@ -63,7 +64,7 @@ class GameParser:
             runner_id = runner['details']['runner']['id']
             for ab_runner in ab.runners:
                 if (ab_runner.id == runner_id and
-                    ab_runner.event_num == play_index):
+                    play_index + 1 == num_events):
                         if end > ab_runner.end:
                             ab_runner.end = end  # Increase end
                         if start < ab_runner.start:
@@ -76,7 +77,7 @@ class GameParser:
                 r = Runner(runner_id, start, end, play_index)
                 r.out = mvmt['isOut']
 
-                if i in runner_index:
+                if play_index + 1 == num_events:
                     ab.add_atbat_runner(r)
                 else:
                     ab.add_mid_pa_runner(r)
