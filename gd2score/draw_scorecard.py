@@ -27,8 +27,9 @@ class DrawScorecard:
         self.draw_inning_numbers()
         self.draw_team_boxes()
         self.draw_game()
-        self.draw_pitcher_hash_marks()
-        self.draw_pitcher_names()
+        if self.game.innings:
+            self.draw_pitcher_hash_marks()
+            self.draw_pitcher_names()
         self.draw_score()
         self.draw_logos()
 
