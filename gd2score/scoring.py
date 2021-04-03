@@ -4,9 +4,13 @@ from collections import namedtuple
 POSITIONS = {
     'pitcher': '1',
     'catcher': '2',
+    '1B': '3',
     'first baseman': '3',
+    '2B': '4',
     'second baseman': '4',
+    '3B': '5',
     'third baseman': '5',
+    'SS': '6',
     'shortstop': '6',
     'left fielder': '7',
     'center fielder': '8',
@@ -38,8 +42,8 @@ OUT_TYPES = {
     'grounds out': 'G',
 }
 
-POS = '(\w+ fielder|\w+ baseman|shortstop|pitcher|catcher|fan interference)'
-ERROR_TYPES = '(?:interference|fielding|missed catch|throwing)'
+POS = '(\w+ fielder|\w+ baseman|shortstop|pitcher|catcher|fan interference|1B|2B|3B)'
+ERROR_TYPES = '(?:interference|fielding|missed catch|throwing|reaches on an)'
 OUT = '(%s)' % '|'.join(OUT_TYPES.keys())
 AIR = '(%s)' % '|'.join(AIR_TYPES.keys())
 HIT = '(%s)' % '|'.join(HIT_BALLS.keys())
@@ -118,6 +122,9 @@ def get_scoring(ab):
         if g:
             return Scoring(OUT_TYPES[g.group(1)] + POSITIONS[g.group(2)],
                            'out')
+        g = re.search(OUT, ab.des)
+        if g:
+            return Scoring(OUT_TYPES[g.group(1)], 'out')
 
     elif ab.event == 'double_play' or ab.event == 'triple_play':
         g = re.search((AIR + " into a(?:n unassisted|\sfielder's choice)? " +
