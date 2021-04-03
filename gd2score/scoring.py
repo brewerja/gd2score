@@ -11,6 +11,7 @@ POSITIONS = {
     'left fielder': '7',
     'center fielder': '8',
     'right fielder': '9',
+    'fan interference': '',
 }
 
 HIT_BALLS = {
@@ -37,7 +38,7 @@ OUT_TYPES = {
     'grounds out': 'G',
 }
 
-POS = '(\w+ fielder|\w+ baseman|shortstop|pitcher|catcher)'
+POS = '(\w+ fielder|\w+ baseman|shortstop|pitcher|catcher|fan interference)'
 ERROR_TYPES = '(?:interference|fielding|missed catch|throwing)'
 OUT = '(%s)' % '|'.join(OUT_TYPES.keys())
 AIR = '(%s)' % '|'.join(AIR_TYPES.keys())
@@ -89,7 +90,7 @@ def get_scoring(ab):
         g = re.search('sacrifice fly(?:,| to) ' + POS, ab.des)
         if g:
             return Scoring('F' + POSITIONS[g.group(1)], 'out')
-        g = re.search('sacrifice fly. Fielding error by (\w+ fielder)', ab.des)
+        g = re.search('sacrifice fly.\s+Fielding error by (\w+ fielder)', ab.des)
         if g:  # 4/25
             return Scoring('E' + POSITIONS[g.group(1)], 'error')
 
@@ -112,7 +113,7 @@ def get_scoring(ab):
     #elif ab.event in ('Flyout', 'Lineout', 'Bunt Lineout', 'Pop Out',
     #                  'Bunt Pop Out', 'Groundout', 'Bunt Groundout'):
         # ', ' or ' sharply, ' or ' sharply to ' or ' to '
-        g = re.search(OUT + '(?:,\s|\s\w+,\s|\s\w+\sto\s|\sto\s)' + POS,
+        g = re.search(OUT + '(?:,\s|\s\w+,\s|\s\w+\sto\s|\sto\s|\son\s)' + POS,
                       ab.des)
         if g:
             return Scoring(OUT_TYPES[g.group(1)] + POSITIONS[g.group(2)],
@@ -163,6 +164,11 @@ def get_scoring(ab):
 
         if ab.event == 'single':
             return Scoring('S', 'on-base')
+        elif ab.event == 'double':
+            return Scoring('D', 'on-base')
+        elif ab.event == 'triple':
+            return Scoring('T', 'on-base')
+
 
     elif ab.event == 'home_run':
         return Scoring('HR', 'on-base')
@@ -175,11 +181,23 @@ def get_scoring(ab):
         if g:
             return Scoring('E' + POSITIONS[g.group(1)], 'error')
 
+    elif ab.event == 'fielders_choice_out':
+        g = re.search(("(?:fielded by\s)?" + POS), ab.des)
+        if g and g.group(1) in POSITIONS.keys():
+            print(ab.__dict__)
+            return Scoring('FC' + POSITIONS[g.group(1)], 'fc')
+        g = re.search(("reaches on a fielder's choice(?:\sout)?, " +
+                       "(?:fielded by\s)?" + POS), ab.des)
+        if g:
+            return Scoring('FC' + POSITIONS[g.group(1)], 'fc')
+
     elif ab.event.startswith('fielders_choice'):
         g = re.search(("reaches on a fielder's choice(?:\sout)?, " +
                        "(?:fielded by\s)?" + POS), ab.des)
         if g:
             return Scoring('FC' + POSITIONS[g.group(1)], 'fc')
+        else:
+            return Scoring('FC', 'fc')
 
     elif ab.event == 'fan_interference':
         if ab.outs == 3 or ab.batter not in [r.id for r in ab.runners]:
