@@ -232,6 +232,9 @@ def get_scoring(ab):
     elif ab.event == 'balk':
         return Scoring('BK', 'on-base')
 
+    elif ab.event == 'game_advisory':
+        return Scoring('', 'blank')
+
     else:
         print(ab.__dict__)
         raise Exception('New event type: %s' % ab.event)
