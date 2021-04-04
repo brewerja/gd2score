@@ -24,7 +24,7 @@ class GameParser:
                        int(play['atBatIndex']),
                        int(play['matchup']['batter']['id']),
                        self.build_description(play),
-                       play['result']['eventType'],
+                       play['result'].get('eventType', 'game_advisory'),
                        int(play['matchup']['pitcher']['id']),
                        int(play['count']['outs']),
                        int(play['result']['homeScore']),
