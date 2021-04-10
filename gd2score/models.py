@@ -136,7 +136,16 @@ class AtBat:
         raise KeyError
 
     def add_mid_pa_runner(self, runner):
-        self.mid_pa_runners.append(runner)
+        already_added = False
+        for r in self.mid_pa_runners:
+            if r.id == runner.id:
+                already_added = True
+                if runner.start < r.start:
+                    r.start = runner.start
+                elif runner.end > r.end:
+                    r.end = runner.end
+        if not already_added:
+            self.mid_pa_runners.append(runner)
 
     def add_atbat_runner(self, runner):
         self.runners.append(runner)
