@@ -232,7 +232,8 @@ def get_scoring(ab):
     elif ab.event == 'balk':
         return Scoring('BK', 'on-base')
 
-    elif ab.event in ['game_advisory', 'pitching_substitution']:
+    elif ab.event in ['game_advisory', 'pitching_substitution',
+            'offensive_substitution']:
         return Scoring('', 'blank')
 
     else:
