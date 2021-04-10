@@ -48,6 +48,12 @@ class GameParser:
     def parse_runners(self, ab, play):
         num_events = len(play['playEvents'])
         runner_index = set(play['runnerIndex'])
+        # Runners placed on 2nd to begin inning
+        for event in play['playEvents']:
+            if event['details'].get('eventType', '') == 'runner_placed':
+                base = event['base']
+                ab.add_atbat_runner(
+                        Runner(event['player']['id'], base, base, event['index']))
         for i, runner in enumerate(play['runners']):
             mvmt = runner['movement']
             start = self.get_base(mvmt['start'])
