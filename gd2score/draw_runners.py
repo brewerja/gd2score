@@ -116,6 +116,7 @@ class DrawRunners:
         x, y = self.get_line_end(line)
         if is_out:
             g = Group()
+            g['class'] = 'out'
             g.add(Line((x - X_SIZE, y - X_SIZE), (x + X_SIZE, y + X_SIZE)))
             g.add(Line((x - X_SIZE, y + X_SIZE), (x + X_SIZE, y - X_SIZE)))
             return g
