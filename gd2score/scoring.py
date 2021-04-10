@@ -88,7 +88,7 @@ def get_scoring(ab):
                       ab.des)
         if g:
             return Scoring(AIR_TYPES[g.group(1)] + POSITIONS[g.group(2)],
-                           'out')
+                           'fc')
 
     elif ab.event == 'sac_fly':
         g = re.search('sacrifice fly(?:,| to) ' + POS, ab.des)
@@ -139,13 +139,13 @@ def get_scoring(ab):
             return Scoring('DP', 'out')
 
     elif ab.event.startswith('pickoff_caught_stealing'): # 2b, 3b, home
-        return Scoring('POCS', 'out')
+        return Scoring('POCS', 'fc')
     elif ab.event.startswith('pickoff_error'):
         return Scoring('PO', 'error')
     elif ab.event.startswith('pickoff'):
-        return Scoring('PO', 'out')
+        return Scoring('PO', 'fc')
     elif ab.event.startswith('caught_stealing'):
-        return Scoring('CS', 'out')
+        return Scoring('CS', 'fc')
     elif ab.event == 'runner_double_play':
         return Scoring('DP', 'out')
 
