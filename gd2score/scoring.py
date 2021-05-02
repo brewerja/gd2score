@@ -233,7 +233,7 @@ def get_scoring(ab):
         return Scoring('BK', 'on-base')
 
     elif ab.event in ['game_advisory', 'pitching_substitution',
-            'offensive_substitution', 'runner_placed']:
+            'offensive_substitution', 'defensive_substitution', 'runner_placed']:
         return Scoring('', 'blank')
 
     else:
