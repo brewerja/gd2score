@@ -1,7 +1,3 @@
-from collections import namedtuple
-import re
-import logging
-
 from .scoring import get_scoring
 
 

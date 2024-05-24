@@ -1,8 +1,3 @@
-import re
-import logging
-
-import statsapi
-
 from .models import Runner
 from .runner_highlighter import RunnerHighlighter
 
@@ -20,13 +15,10 @@ class GameEnhancer:
     def fix_half_inning(self, half_inning):
         """Adds missing runner tags, and resolves the ending bases of runners
         with empty end tags."""
-        outs = 0
         active_runners = []
         for atbat in half_inning:
             self.hold_runners(active_runners, atbat)
-
             active_runners = [r for r in atbat.runners if not r.out and r.end != 4]
-            outs = atbat.outs
 
     def hold_runners(self, active_runners, atbat):
         """The schema only represents runner movement. We need a record in each

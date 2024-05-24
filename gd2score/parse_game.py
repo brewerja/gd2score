@@ -49,7 +49,6 @@ class GameParser:
 
     def parse_runners(self, ab, play):
         num_events = len(play["playEvents"])
-        runner_index = set(play["runnerIndex"])
         # Runners placed on 2nd to begin inning
         for event in play["playEvents"]:
             if event["details"].get("eventType", "") == "runner_placed":
