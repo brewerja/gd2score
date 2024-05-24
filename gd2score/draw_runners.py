@@ -4,8 +4,17 @@ import math
 from svgwrite.shapes import Circle, Line
 from svgwrite.container import Group
 
-from .constants import (ORIGIN_X, ATBAT_HT, NAME_W, SCORE_W, BASE_L, CIRCLE_R,
-                        X_SIZE, OUT_SHORTEN, flip)
+from .constants import (
+    ORIGIN_X,
+    ATBAT_HT,
+    NAME_W,
+    SCORE_W,
+    BASE_L,
+    CIRCLE_R,
+    X_SIZE,
+    OUT_SHORTEN,
+    flip,
+)
 
 
 class DrawRunners:
@@ -23,7 +32,8 @@ class DrawRunners:
     def draw_mid_pa_runners(self):
         num_events = len(self.get_mid_pa_event_num_set())
         for i, (event_num, group) in enumerate(
-                groupby(self.atbat.mid_pa_runners, lambda r: r.event_num)):
+            groupby(self.atbat.mid_pa_runners, lambda r: r.event_num)
+        ):
             for runner in sorted(list(group), key=lambda r: r.end):
                 line = self.get_mid_pa_runner_line(runner, i, num_events)
                 runner_group = self.finalize_runner_line(line, runner)
@@ -69,10 +79,14 @@ class DrawRunners:
     def get_mid_pa_runner_to_use(self, mid_pa_runner_end):
         if self.atbat.mid_pa_runners:
             last_event_num = max(self.get_mid_pa_event_num_set())
-            mid_pa_runners = [r for r in self.atbat.mid_pa_runners
-                              if not r.out and r.end == mid_pa_runner_end and
-                              r.event_num == last_event_num]
-            assert(len(mid_pa_runners) in (0, 1))
+            mid_pa_runners = [
+                r
+                for r in self.atbat.mid_pa_runners
+                if not r.out
+                and r.end == mid_pa_runner_end
+                and r.event_num == last_event_num
+            ]
+            assert len(mid_pa_runners) in (0, 1)
             if mid_pa_runners:
                 return mid_pa_runners[0]
 
@@ -100,7 +114,7 @@ class DrawRunners:
             x, y = self.get_line_end(line)
             new_x = x
             new_y = self.get_line_end(line)[1] - OUT_SHORTEN
-        line.attribs['x2'], line.attribs['y2'] = new_x, new_y
+        line.attribs["x2"], line.attribs["y2"] = new_x, new_y
 
     def rotate_line_end(self, line_end, line):
         if not self.is_line_vertical(line):
@@ -116,7 +130,7 @@ class DrawRunners:
         x, y = self.get_line_end(line)
         if is_out:
             g = Group()
-            g['class'] = 'out'
+            g["class"] = "out"
             g.add(Line((x - X_SIZE, y - X_SIZE), (x + X_SIZE, y + X_SIZE)))
             g.add(Line((x - X_SIZE, y + X_SIZE), (x + X_SIZE, y - X_SIZE)))
             return g
@@ -128,19 +142,19 @@ class DrawRunners:
         runner_group.add(line)
         runner_group.add(line_end)
         if to_score:
-            runner_group['class'] = 'runner to-score'
+            runner_group["class"] = "runner to-score"
         else:
-            runner_group['class'] = 'runner'
+            runner_group["class"] = "runner"
         return runner_group
 
     def is_line_vertical(self, line):
-        return line.attribs['x1'] == line.attribs['x2']
+        return line.attribs["x1"] == line.attribs["x2"]
 
     def get_line_start(self, line):
-        return line.attribs['x1'], line.attribs['y1']
+        return line.attribs["x1"], line.attribs["y1"]
 
     def get_line_end(self, line):
-        return line.attribs['x2'], line.attribs['y2']
+        return line.attribs["x2"], line.attribs["y2"]
 
     def get_line_length(self, line):
         x_start, y_start = self.get_line_start(line)

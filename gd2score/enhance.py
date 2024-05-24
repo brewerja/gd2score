@@ -25,8 +25,7 @@ class GameEnhancer:
         for atbat in half_inning:
             self.hold_runners(active_runners, atbat)
 
-            active_runners = [r for r in atbat.runners
-                              if not r.out and r.end != 4]
+            active_runners = [r for r in atbat.runners if not r.out and r.end != 4]
             outs = atbat.outs
 
     def hold_runners(self, active_runners, atbat):

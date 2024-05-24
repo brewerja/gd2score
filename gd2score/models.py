@@ -15,14 +15,15 @@ class Runner:
         self.to_score = False
 
     def __str__(self):
-        retval = '       ' + ' '.join([str(x) for x in [self.id, self.start,
-                                                        '->', self.end]])
+        retval = "       " + " ".join(
+            [str(x) for x in [self.id, self.start, "->", self.end]]
+        )
         if self.out:
-            retval += ' out!'
+            retval += " out!"
         elif self.to_score and self.end == 4:
-            retval += ' scores!'
+            retval += " scores!"
         elif self.to_score:
-            retval += ' will score'
+            retval += " will score"
         return retval
         return str(self.__dict__)
 
@@ -72,7 +73,7 @@ class Inning(Iter):
         assert len(self.halves) in (1, 2)
 
     def __str__(self):
-        return 'Inning %d' % (self.num)
+        return "Inning %d" % (self.num)
 
 
 class HalfInning(Iter):
@@ -95,15 +96,25 @@ class HalfInning(Iter):
 
     def __str__(self):
         if self.num % 1.0:
-            return '  Bottom %d' % (self.num)
-        return '  Top %d' % (self.num)
+            return "  Bottom %d" % (self.num)
+        return "  Top %d" % (self.num)
 
 
 class AtBat:
-    def __init__(self, pa_num, event_num, batter, des, event, pitcher,
-                 outs=0, home_score=0, away_score=0,
-                 mid_pa_runners=None, runners=None):
-
+    def __init__(
+        self,
+        pa_num,
+        event_num,
+        batter,
+        des,
+        event,
+        pitcher,
+        outs=0,
+        home_score=0,
+        away_score=0,
+        mid_pa_runners=None,
+        runners=None,
+    ):
         self.pa_num = pa_num
         self.event_num = event_num
         self.batter = batter
@@ -156,7 +167,7 @@ class AtBat:
         elif runner.event_num == self.event_num:
             self.runners.append(runner)
         else:
-            raise Exception('Runner bad ordering')
+            raise Exception("Runner bad ordering")
 
     def add_action(self, action):
         self.actions.append(action)
@@ -165,16 +176,25 @@ class AtBat:
         descriptions = [a.des for a in self.actions]
         if self.des not in descriptions:
             descriptions.append(self.des)
-        return '\n'.join(descriptions)
+        return "\n".join(descriptions)
 
     def __str__(self):
-        retval = '    ' + ' '.join(
-            [str(x) for x in [self.pa_num, self.batter, self.pitcher,
-                              self.outs, self.scoring.code]])
-        if self.scoring.result == 'on-base':
-            retval += ' ' + self.event
-        elif self.scoring.result == 'error':
-            retval += ' (error)'
+        retval = "    " + " ".join(
+            [
+                str(x)
+                for x in [
+                    self.pa_num,
+                    self.batter,
+                    self.pitcher,
+                    self.outs,
+                    self.scoring.code,
+                ]
+            ]
+        )
+        if self.scoring.result == "on-base":
+            retval += " " + self.event
+        elif self.scoring.result == "error":
+            retval += " (error)"
         return retval
 
 

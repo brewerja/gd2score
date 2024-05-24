@@ -9,8 +9,9 @@ class RunnerHighlighter:
 
     def parse_atbat_ending_runners(self, atbat):
         for runner in atbat.runners:
-            if ((runner.end in self.bases_scored_from or
-                 runner.end == 4) and not runner.out):
+            if (
+                runner.end in self.bases_scored_from or runner.end == 4
+            ) and not runner.out:
                 self.mark_and_save(runner)
 
     def parse_mid_pa_runners(self, atbat):

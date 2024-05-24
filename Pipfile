@@ -4,8 +4,8 @@ verify_ssl = true
 name = "pypi"
 
 [dev-packages]
+ruff = "*"
 
 [packages]
-
 svgwrite = "*"
 mlb-statsapi = "*"
