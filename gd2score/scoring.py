@@ -244,6 +244,7 @@ def get_scoring(ab):
         "offensive_substitution",
         "defensive_substitution",
         "runner_placed",
+        "mound_visit",
     ]:
         return Scoring("", "blank")
 
