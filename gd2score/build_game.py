@@ -16,6 +16,7 @@ class GameBuilder:
         game.away = feed["gameData"]["teams"]["away"]["fileCode"]
         game.home = feed["gameData"]["teams"]["home"]["fileCode"]
         game.players = self.parse_players(feed["gameData"]["players"])
+        game.link = f"https://statsapi.mlb.com{feed['link']}"
         self.game_enhancer.execute(game)
         return game
 
